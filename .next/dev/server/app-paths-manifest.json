@@ -1,5 +1,7 @@
 {
+  "/_not-found/page": "app/_not-found/page.js",
   "/admin/ai-import/page": "app/admin/ai-import/page.js",
   "/admin/page": "app/admin/page.js",
-  "/admin/parts/page": "app/admin/parts/page.js"
+  "/admin/parts/page": "app/admin/parts/page.js",
+  "/catalog/page": "app/catalog/page.js"
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 
 import { CarModelChipsInput } from "@/components/admin/car-model-chips-input";
+import { CategorySelectWithCreate } from "@/components/admin/category-select-with-create";
 import {
   Dialog,
   DialogContent,
@@ -50,14 +51,7 @@ export default async function AdminPartsPage() {
           <input name="title" required placeholder="Название" className="h-9 rounded-md border border-border/60 bg-background px-3 text-sm" />
           <input name="oemNumber" required placeholder="OEM номер" className="h-9 rounded-md border border-border/60 bg-background px-3 text-sm" />
 
-          <select name="categoryId" required className="h-9 rounded-md border border-border/60 bg-background px-3 text-sm">
-            <option value="">Выберите категорию</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
+          <CategorySelectWithCreate categories={categories} />
 
           <input name="priceFrom" placeholder="Цена от" type="number" min={0} className="h-9 rounded-md border border-border/60 bg-background px-3 text-sm" />
 
@@ -157,17 +151,7 @@ export default async function AdminPartsPage() {
                             required
                             className="h-9 rounded-md border border-border/60 bg-background px-3 text-sm"
                           />
-                          <select
-                            name="categoryId"
-                            defaultValue={part.categoryId}
-                            className="h-9 rounded-md border border-border/60 bg-background px-3 text-sm"
-                          >
-                            {categories.map((category) => (
-                              <option key={category.id} value={category.id}>
-                                {category.name}
-                              </option>
-                            ))}
-                          </select>
+                          <CategorySelectWithCreate categories={categories} defaultCategoryId={part.categoryId} />
                           <CarModelChipsInput
                             name="compatibleCarModels"
                             defaultValue={part.compatibleCars.join(", ")}

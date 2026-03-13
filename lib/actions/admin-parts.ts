@@ -10,7 +10,8 @@ import { prisma } from "@/lib/db";
 const basePartSchema = z.object({
   title: z.string().min(2),
   oemNumber: z.string().min(2),
-  categoryId: z.string().min(1),
+  categoryId: z.string().optional(),
+  newCategoryName: z.string().optional(),
   priceFrom: z.union([z.string(), z.number()]).optional().transform((value) => {
     if (value === undefined || value === "") {
       return null;
@@ -40,6 +41,7 @@ function parseCommon(formData: FormData) {
     title: String(formData.get("title") ?? ""),
     oemNumber: String(formData.get("oemNumber") ?? ""),
     categoryId: String(formData.get("categoryId") ?? ""),
+    newCategoryName: String(formData.get("newCategoryName") ?? ""),
     priceFrom: String(formData.get("priceFrom") ?? ""),
     inStock:
       formData.get("inStock") === "true" ||
@@ -48,7 +50,39 @@ function parseCommon(formData: FormData) {
     compatibleCarModels: String(formData.get("compatibleCarModels") ?? ""),
   };
 
-  return basePartSchema.parse(raw);
+  const parsed = basePartSchema.parse(raw);
+  const categoryId = parsed.categoryId?.trim() ?? "";
+  const newCategoryName = parsed.newCategoryName?.trim() ?? "";
+
+  if (!categoryId && !newCategoryName) {
+    throw new Error("Выберите категорию или введите новую");
+  }
+
+  return {
+    ...parsed,
+    categoryId,
+    newCategoryName,
+  };
+}
+
+async function resolveCategoryId(categoryId: string, newCategoryName: string): Promise<string> {
+  if (newCategoryName) {
+    const slug = toSlug(newCategoryName);
+
+    if (!slug) {
+      throw new Error("Некорректное название категории");
+    }
+
+    const category = await prisma.category.upsert({
+      where: { slug },
+      update: { name: newCategoryName },
+      create: { name: newCategoryName, slug },
+    });
+
+    return category.id;
+  }
+
+  return categoryId;
 }
 
 type DbCarLookup = {
@@ -159,13 +193,14 @@ export async function createPartAction(formData: FormData) {
   const parsed = parseCommon(formData);
   const slugBase = toSlug(`${parsed.title} ${parsed.oemNumber}`);
   const carIds = await resolveCarIds(parsed.compatibleCarModels);
+  const categoryId = await resolveCategoryId(parsed.categoryId, parsed.newCategoryName);
 
   const part = await prisma.part.create({
     data: {
       title: parsed.title,
       oemNumber: parsed.oemNumber,
       slug: slugBase || `part-${Date.now()}`,
-      categoryId: parsed.categoryId,
+      categoryId,
       priceFrom: parsed.priceFrom,
       inStock: parsed.inStock,
     },
@@ -189,6 +224,7 @@ export async function updatePartAction(formData: FormData) {
   const parsed = parseCommon(formData);
   const slugBase = toSlug(`${parsed.title} ${parsed.oemNumber}`);
   const carIds = await resolveCarIds(parsed.compatibleCarModels);
+  const categoryId = await resolveCategoryId(parsed.categoryId, parsed.newCategoryName);
 
   const part = await prisma.part.update({
     where: {
@@ -198,7 +234,7 @@ export async function updatePartAction(formData: FormData) {
       title: parsed.title,
       oemNumber: parsed.oemNumber,
       slug: slugBase || `part-${Date.now()}`,
-      categoryId: parsed.categoryId,
+      categoryId,
       priceFrom: parsed.priceFrom,
       inStock: parsed.inStock,
     },

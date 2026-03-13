@@ -21,7 +21,7 @@ const formSchema = z.object({
 const rowSchema = z.object({
   line: z.number().int().positive(),
   title: z.string().min(1),
-  oem: z.string().min(1),
+  oem: z.string().optional(),
   brand: z.string().min(1),
   model: z.string().min(1),
   category: z.string().min(1),
@@ -42,12 +42,37 @@ function parsePrice(input: string | number | undefined): number | null {
     return null;
   }
 
-  const numeric = Number(input);
+  const normalizedInput = String(input)
+    .replace(/\s+/g, "")
+    .replace(",", ".")
+    .trim();
+
+  const numeric = Number(normalizedInput);
   if (Number.isNaN(numeric) || numeric < 0) {
     return null;
   }
 
   return Math.round(numeric);
+}
+
+function normalizeCategoryName(input: string): string {
+  const value = input.trim();
+
+  if (!value || value === "-" || value === "—") {
+    return "Прочее";
+  }
+
+  return value;
+}
+
+function resolveOemNumber(input: string | undefined, importJobId: string, line: number): string {
+  const normalized = String(input ?? "").trim();
+
+  if (normalized) {
+    return normalized;
+  }
+
+  return `AI-NOOEM-${importJobId.slice(-8)}-${line}`;
 }
 
 function rowsToCsv(rows: Array<z.infer<typeof rowSchema>>): string {
@@ -99,7 +124,33 @@ export async function importPartsFromAiAction(
   let aiResult;
 
   try {
-    aiResult = await parseCatalogTextWithAi(parsedForm.data.rawInput);
+    const knownCars = await prisma.car.findMany({
+      include: {
+        brand: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: [
+        { brand: { name: "asc" } },
+        { model: "asc" },
+      ],
+      take: 500,
+    });
+
+    const knownModels = Array.from(
+      new Set(
+        knownCars
+          .flatMap((car) => {
+            const fullName = [car.brand.name, car.model, car.generation].filter(Boolean).join(" ").trim();
+            return [fullName, car.model.trim()].filter(Boolean);
+          })
+          .map((entry) => entry.toLowerCase())
+      )
+    );
+
+    aiResult = await parseCatalogTextWithAi(parsedForm.data.rawInput, { knownModels });
   } catch (error) {
     return {
       status: "error",
@@ -165,7 +216,7 @@ export async function importPartsFromAiAction(
         oem: String(row.oem ?? "").trim(),
         brand: String(row.brand ?? "").trim(),
         model: String(row.model ?? "").trim(),
-        category: String(row.category ?? "").trim(),
+        category: normalizeCategoryName(String(row.category ?? "")),
         price: String(row.price ?? "").trim(),
         image: String(row.image ?? "").trim(),
       };
@@ -178,6 +229,7 @@ export async function importPartsFromAiAction(
       }
 
       const data = parsed.data;
+      const oemNumber = resolveOemNumber(data.oem, importJob.id, data.line);
 
       try {
         const brand = await prisma.brand.upsert({
@@ -206,23 +258,23 @@ export async function importPartsFromAiAction(
         });
 
         const existingPart = await prisma.part.findUnique({
-          where: { oemNumber: data.oem },
+          where: { oemNumber },
           select: { id: true },
         });
 
         const part = await prisma.part.upsert({
-          where: { oemNumber: data.oem },
+          where: { oemNumber },
           update: {
             title: data.title,
-            slug: slugify(`${data.title} ${data.oem}`),
+            slug: slugify(`${data.title} ${oemNumber}`),
             categoryId: category.id,
             priceFrom: parsePrice(data.price),
             inStock: true,
           },
           create: {
             title: data.title,
-            oemNumber: data.oem,
-            slug: slugify(`${data.title} ${data.oem}`),
+            oemNumber,
+            slug: slugify(`${data.title} ${oemNumber}`),
             categoryId: category.id,
             priceFrom: parsePrice(data.price),
             inStock: true,

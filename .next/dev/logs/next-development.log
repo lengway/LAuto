@@ -1,15 +1,10 @@
-[00:00:01.083] Server  LOG      ✓ Ready in 823ms
-[00:00:04.146] Server  LOG      ○ Compiling /admin/ai-import ...
-[00:00:22.492] Browser ERROR   Cannot specify a encType or method for a form that specifies a function as the action. React provides those automatically. They will get overridden.
-[00:00:22.492] Browser ERROR   uncaughtError: Error: Invalid src prop (https://example.com/images/123-abc.jpg) on `next/image`, hostname "example.com" is not configured under images in your `next.config.js`
-See more info: https://nextjs.org/docs/messages/next-image-unconfigured-host
-[00:00:40.422] Server  ERROR   C:\Users\lengway\Desktop\Projects\lauto\frontend\.next\dev\server\chunks\ssr\frontend_1aa3340f._.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-[00:00:40.426] Server  ERROR    ⨯ Error: Invalid src prop (https://example.com/images/123-abc.jpg) on `next/image`, hostname "example.com" is not configured under images in your `next.config.js`
-See more info: https://nextjs.org/docs/messages/next-image-unconfigured-host
-[00:00:42.661] Browser ERROR   uncaughtError: Error: Invalid src prop (https://example.com/images/123-abc.jpg) on `next/image`, hostname "example.com" is not configured under images in your `next.config.js`
-See more info: https://nextjs.org/docs/messages/next-image-unconfigured-host
-[00:00:59.661] Server  ERROR   C:\Users\lengway\Desktop\Projects\lauto\frontend\.next\dev\server\chunks\ssr\frontend_1aa3340f._.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-[00:00:59.663] Server  ERROR    ⨯ Error: Invalid src prop (https://example.com/images/123-abc.jpg) on `next/image`, hostname "example.com" is not configured under images in your `next.config.js`
-See more info: https://nextjs.org/docs/messages/next-image-unconfigured-host
-[00:01:00.389] Browser ERROR   uncaughtError: Error: Invalid src prop (https://example.com/images/123-abc.jpg) on `next/image`, hostname "example.com" is not configured under images in your `next.config.js`
-See more info: https://nextjs.org/docs/messages/next-image-unconfigured-host
+[00:00:01.519] Server  LOG      ✓ Ready in 1085ms
+[00:00:04.574] Server  LOG      ○ Compiling /admin/parts ...
+[00:41:38.232] Server  ERROR   C:\Users\lengway\Desktop\Projects\lauto\node_modules\next\dist\server\image-optimizer.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:41:38.236] Server  ERROR   C:\Users\lengway\Desktop\Projects\lauto\node_modules\next\dist\server\next-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:41:38.236] Server  ERROR   C:\Users\lengway\Desktop\Projects\lauto\node_modules\next\dist\server\response-cache\index.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:41:38.237] Server  ERROR   C:\Users\lengway\Desktop\Projects\lauto\node_modules\next\dist\lib\batcher.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+[00:41:38.241] Server  ERROR   TypeError: fetch failed
+[00:41:41.934] Server  ERROR    ⨯ "upstream image response failed for" "https://images.unsplash.com/photo-1635764703282-f4a56f6abf54?auto=format&fit=crop&w=1200&q=80" 404
+[00:41:42.696] Server  ERROR    ⨯ "upstream image response failed for" "https://images.unsplash.com/photo-1613214149922-f1809c99f203?auto=format&fit=crop&w=1200&q=80" 404
+[00:41:44.685] Server  ERROR    ⨯ "upstream image response failed for" "https://images.unsplash.com/photo-1595716146228-378b558d46d9?auto=format&fit=crop&w=1200&q=80" 404

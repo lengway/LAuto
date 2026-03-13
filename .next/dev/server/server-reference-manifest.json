@@ -1,64 +1,64 @@
 {
   "node": {
-    "60c5e33fdd2cbde90ed6f0986967b3961ede0ae0d5": {
+    "405e07f7ae44db95d983c9ebbc5645970317c631bc": {
+      "workers": {
+        "app/admin/parts/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/parts/page/actions.js { ACTIONS_MODULE0 => \"[project]/lib/actions/admin-parts.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "deletePartAction",
+          "filename": "lib/actions/admin-parts.ts"
+        }
+      },
+      "layer": {
+        "app/admin/parts/page": "rsc"
+      },
+      "filename": "lib/actions/admin-parts.ts",
+      "exportedName": "deletePartAction"
+    },
+    "40ceb02c6a4b2d2961a0d7ad5648b5f51f4ea4c9d7": {
+      "workers": {
+        "app/admin/parts/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/parts/page/actions.js { ACTIONS_MODULE0 => \"[project]/lib/actions/admin-parts.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "updatePartAction",
+          "filename": "lib/actions/admin-parts.ts"
+        }
+      },
+      "layer": {
+        "app/admin/parts/page": "rsc"
+      },
+      "filename": "lib/actions/admin-parts.ts",
+      "exportedName": "updatePartAction"
+    },
+    "40e37bb7832e9a520a06f1c9b9f11bfe2b10e0c5ed": {
+      "workers": {
+        "app/admin/parts/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/parts/page/actions.js { ACTIONS_MODULE0 => \"[project]/lib/actions/admin-parts.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "createPartAction",
+          "filename": "lib/actions/admin-parts.ts"
+        }
+      },
+      "layer": {
+        "app/admin/parts/page": "rsc"
+      },
+      "filename": "lib/actions/admin-parts.ts",
+      "exportedName": "createPartAction"
+    },
+    "60ba1169f2f45461ab8ae027201b6b9cd9c2d889d1": {
       "workers": {
         "app/admin/ai-import/page": {
-          "moduleId": "[project]/frontend/.next-internal/server/app/admin/ai-import/page/actions.js { ACTIONS_MODULE0 => \"[project]/frontend/lib/actions/admin-ai-import.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "moduleId": "[project]/.next-internal/server/app/admin/ai-import/page/actions.js { ACTIONS_MODULE0 => \"[project]/lib/actions/admin-ai-import.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false,
           "exportedName": "importPartsFromAiAction",
-          "filename": "frontend/lib/actions/admin-ai-import.ts"
+          "filename": "lib/actions/admin-ai-import.ts"
         }
       },
       "layer": {
         "app/admin/ai-import/page": "action-browser"
       },
-      "filename": "frontend/lib/actions/admin-ai-import.ts",
+      "filename": "lib/actions/admin-ai-import.ts",
       "exportedName": "importPartsFromAiAction"
-    },
-    "401ad8163d38babef5da6706134665aa5275810eaa": {
-      "workers": {
-        "app/admin/parts/page": {
-          "moduleId": "[project]/frontend/.next-internal/server/app/admin/parts/page/actions.js { ACTIONS_MODULE0 => \"[project]/frontend/lib/actions/admin-parts.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": false,
-          "exportedName": "deletePartAction",
-          "filename": "frontend/lib/actions/admin-parts.ts"
-        }
-      },
-      "layer": {
-        "app/admin/parts/page": "rsc"
-      },
-      "filename": "frontend/lib/actions/admin-parts.ts",
-      "exportedName": "deletePartAction"
-    },
-    "40bd2d0e84dcd065ad244654164b807fb890e6e8a5": {
-      "workers": {
-        "app/admin/parts/page": {
-          "moduleId": "[project]/frontend/.next-internal/server/app/admin/parts/page/actions.js { ACTIONS_MODULE0 => \"[project]/frontend/lib/actions/admin-parts.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": false,
-          "exportedName": "createPartAction",
-          "filename": "frontend/lib/actions/admin-parts.ts"
-        }
-      },
-      "layer": {
-        "app/admin/parts/page": "rsc"
-      },
-      "filename": "frontend/lib/actions/admin-parts.ts",
-      "exportedName": "createPartAction"
-    },
-    "40ffb39d185511b700e6f58c6f12cec278b1b1ac41": {
-      "workers": {
-        "app/admin/parts/page": {
-          "moduleId": "[project]/frontend/.next-internal/server/app/admin/parts/page/actions.js { ACTIONS_MODULE0 => \"[project]/frontend/lib/actions/admin-parts.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": false,
-          "exportedName": "updatePartAction",
-          "filename": "frontend/lib/actions/admin-parts.ts"
-        }
-      },
-      "layer": {
-        "app/admin/parts/page": "rsc"
-      },
-      "filename": "frontend/lib/actions/admin-parts.ts",
-      "exportedName": "updatePartAction"
     }
   },
   "edge": {},

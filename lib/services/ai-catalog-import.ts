@@ -7,7 +7,7 @@ type AiImportIssue = {
 type AiImportRow = {
   line: number;
   title: string;
-  oem: string;
+  oem?: string;
   brand: string;
   model: string;
   category: string;
@@ -22,12 +22,24 @@ export type AiCatalogImportResult = {
   notes: string[];
 };
 
+type AiCatalogParseContext = {
+  knownModels?: string[];
+};
+
 type OpenAiJson = {
   status?: unknown;
   rows?: unknown;
   errors?: unknown;
   notes?: unknown;
 };
+
+function isPlaceholderValue(input: unknown): boolean {
+  const normalized = String(input ?? "")
+    .trim()
+    .toLowerCase();
+
+  return normalized === "-" || normalized === "—" || normalized === "n/a" || normalized === "na";
+}
 
 function normalizeIssue(input: unknown): AiImportIssue | null {
   if (!input || typeof input !== "object") {
@@ -65,17 +77,20 @@ function normalizeRow(input: unknown): AiImportRow | null {
   const row: AiImportRow = {
     line,
     title: String(value.title ?? "").trim(),
-    oem: String(value.oem ?? "").trim(),
     brand: String(value.brand ?? "").trim(),
     model: String(value.model ?? "").trim(),
     category: String(value.category ?? "").trim(),
   };
 
+  if (value.oem !== undefined && value.oem !== null && String(value.oem).trim() !== "" && !isPlaceholderValue(value.oem)) {
+    row.oem = String(value.oem).trim();
+  }
+
   if (value.price !== undefined && value.price !== null && String(value.price).trim() !== "") {
     row.price = typeof value.price === "number" ? value.price : String(value.price).trim();
   }
 
-  if (value.image !== undefined && value.image !== null && String(value.image).trim() !== "") {
+  if (value.image !== undefined && value.image !== null && String(value.image).trim() !== "" && !isPlaceholderValue(value.image)) {
     row.image = String(value.image).trim();
   }
 
@@ -95,7 +110,10 @@ function parseModelJson(raw: string): OpenAiJson {
   }
 }
 
-export async function parseCatalogTextWithAi(rawInput: string): Promise<AiCatalogImportResult> {
+export async function parseCatalogTextWithAi(
+  rawInput: string,
+  context?: AiCatalogParseContext
+): Promise<AiCatalogImportResult> {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
 
   if (!apiKey) {
@@ -103,6 +121,12 @@ export async function parseCatalogTextWithAi(rawInput: string): Promise<AiCatalo
   }
 
   const model = process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini";
+  const knownModels = (context?.knownModels ?? []).filter(Boolean).slice(0, 400);
+  const knownModelsBlock = knownModels.length
+    ? `\nСправочник существующих моделей из БД (используй как контекст для поля model):\n${knownModels
+        .map((entry) => `- ${entry}`)
+        .join("\n")}\n`
+    : "";
 
   const prompt = `
 Ты парсер каталога автозапчастей. Тебе дадут сырой текст, где каждая строка может содержать данные детали.
@@ -113,21 +137,26 @@ export async function parseCatalogTextWithAi(rawInput: string): Promise<AiCatalo
 
 Обязательные поля для каждой детали:
 - title
-- oem
 - brand
 - model
 - category
 
 Необязательные:
+- oem
 - price
 - image
 
 ВАЖНО:
 - Всегда указывай line (номер строки исходного сообщения, начиная с 1).
+- category может быть новой, если такой категории нет в базе — это не ошибка.
+- Определи model из текста строки, учитывая справочник моделей из БД.
+- Если в строке нет точной модели, ставь model = "-" и НЕ добавляй ошибку по model.
 - Если поля не хватает, добавь объект ошибки: { line, field, message }.
 - Если есть хотя бы одна ошибка, status = "needs_clarification".
 - Если ошибок нет, status = "ok".
 - Ответ ТОЛЬКО в JSON-объекте без markdown.
+
+${knownModelsBlock}
 
 Формат ответа:
 {
@@ -202,15 +231,46 @@ export async function parseCatalogTextWithAi(rawInput: string): Promise<AiCatalo
     ? parsed.rows.map((entry) => normalizeRow(entry)).filter((entry): entry is AiImportRow => Boolean(entry))
     : [];
 
-  const errors = Array.isArray(parsed.errors)
+  const rawErrors = Array.isArray(parsed.errors)
     ? parsed.errors.map((entry) => normalizeIssue(entry)).filter((entry): entry is AiImportIssue => Boolean(entry))
     : [];
+
+  const rowByLine = new Map<number, AiImportRow>(rows.map((row) => [row.line, row]));
+  const errors = rawErrors.filter((error) => {
+    const row = rowByLine.get(error.line);
+    if (!row) {
+      return true;
+    }
+
+    if (error.field === "title" && row.title.trim()) {
+      return false;
+    }
+
+    if (error.field === "brand" && row.brand.trim()) {
+      return false;
+    }
+
+    if (error.field === "model" && row.model.trim()) {
+      return false;
+    }
+
+    if (error.field === "category" && row.category.trim()) {
+      return false;
+    }
+
+    if (error.field === "oem" && String(row.oem ?? "").trim()) {
+      return false;
+    }
+
+    return true;
+  });
 
   const notes = Array.isArray(parsed.notes)
     ? parsed.notes.filter((entry): entry is string => typeof entry === "string")
     : [];
 
-  const status = parsed.status === "ok" && errors.length === 0 ? "ok" : "needs_clarification";
+  const hasRows = rows.length > 0;
+  const status = errors.length === 0 && hasRows ? "ok" : "needs_clarification";
 
   return {
     status,
