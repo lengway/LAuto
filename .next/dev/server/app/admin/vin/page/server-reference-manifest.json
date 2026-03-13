@@ -1,0 +1,50 @@
+{
+  "node": {
+    "4031b3924d3d3e0aa5fa4519a2eb23ab6b876a6034": {
+      "workers": {
+        "app/admin/vin/page": {
+          "moduleId": "[project]/frontend/.next-internal/server/app/admin/vin/page/actions.js { ACTIONS_MODULE0 => \"[project]/frontend/lib/actions/admin-vin.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "updateVinPatternAction",
+          "filename": "frontend/lib/actions/admin-vin.ts"
+        }
+      },
+      "layer": {
+        "app/admin/vin/page": "rsc"
+      },
+      "exportedName": "updateVinPatternAction",
+      "filename": "frontend/lib/actions/admin-vin.ts"
+    },
+    "409cfb91257a875be4c430bed8dea4ae3260c36aae": {
+      "workers": {
+        "app/admin/vin/page": {
+          "moduleId": "[project]/frontend/.next-internal/server/app/admin/vin/page/actions.js { ACTIONS_MODULE0 => \"[project]/frontend/lib/actions/admin-vin.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "createVinPatternAction",
+          "filename": "frontend/lib/actions/admin-vin.ts"
+        }
+      },
+      "layer": {
+        "app/admin/vin/page": "rsc"
+      },
+      "exportedName": "createVinPatternAction",
+      "filename": "frontend/lib/actions/admin-vin.ts"
+    },
+    "40f941ba4fdcfb6fb5042946a07577723e74fdb5e5": {
+      "workers": {
+        "app/admin/vin/page": {
+          "moduleId": "[project]/frontend/.next-internal/server/app/admin/vin/page/actions.js { ACTIONS_MODULE0 => \"[project]/frontend/lib/actions/admin-vin.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "deleteVinPatternAction",
+          "filename": "frontend/lib/actions/admin-vin.ts"
+        }
+      },
+      "layer": {
+        "app/admin/vin/page": "rsc"
+      },
+      "exportedName": "deleteVinPatternAction",
+      "filename": "frontend/lib/actions/admin-vin.ts"
+    }
+  },
+  "edge": {}
+}

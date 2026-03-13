@@ -1,0 +1,50 @@
+{
+  "node": {
+    "40432abfdccf8c8f735be287cb4dd4052cd7b51284": {
+      "workers": {
+        "app/admin/cars/page": {
+          "moduleId": "[project]/frontend/.next-internal/server/app/admin/cars/page/actions.js { ACTIONS_MODULE0 => \"[project]/frontend/lib/actions/admin-cars.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "updateCarAction",
+          "filename": "frontend/lib/actions/admin-cars.ts"
+        }
+      },
+      "layer": {
+        "app/admin/cars/page": "rsc"
+      },
+      "exportedName": "updateCarAction",
+      "filename": "frontend/lib/actions/admin-cars.ts"
+    },
+    "40773e186035f976b71fde2e9e7c71cd3c0d6ee1f7": {
+      "workers": {
+        "app/admin/cars/page": {
+          "moduleId": "[project]/frontend/.next-internal/server/app/admin/cars/page/actions.js { ACTIONS_MODULE0 => \"[project]/frontend/lib/actions/admin-cars.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "deleteCarAction",
+          "filename": "frontend/lib/actions/admin-cars.ts"
+        }
+      },
+      "layer": {
+        "app/admin/cars/page": "rsc"
+      },
+      "exportedName": "deleteCarAction",
+      "filename": "frontend/lib/actions/admin-cars.ts"
+    },
+    "4092ad11e0bc2c5df7d54f2dd5205e5dfc5906d171": {
+      "workers": {
+        "app/admin/cars/page": {
+          "moduleId": "[project]/frontend/.next-internal/server/app/admin/cars/page/actions.js { ACTIONS_MODULE0 => \"[project]/frontend/lib/actions/admin-cars.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "createCarAction",
+          "filename": "frontend/lib/actions/admin-cars.ts"
+        }
+      },
+      "layer": {
+        "app/admin/cars/page": "rsc"
+      },
+      "exportedName": "createCarAction",
+      "filename": "frontend/lib/actions/admin-cars.ts"
+    }
+  },
+  "edge": {}
+}

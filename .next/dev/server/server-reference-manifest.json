@@ -1,0 +1,66 @@
+{
+  "node": {
+    "60c5e33fdd2cbde90ed6f0986967b3961ede0ae0d5": {
+      "workers": {
+        "app/admin/ai-import/page": {
+          "moduleId": "[project]/frontend/.next-internal/server/app/admin/ai-import/page/actions.js { ACTIONS_MODULE0 => \"[project]/frontend/lib/actions/admin-ai-import.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "importPartsFromAiAction",
+          "filename": "frontend/lib/actions/admin-ai-import.ts"
+        }
+      },
+      "layer": {
+        "app/admin/ai-import/page": "action-browser"
+      },
+      "filename": "frontend/lib/actions/admin-ai-import.ts",
+      "exportedName": "importPartsFromAiAction"
+    },
+    "401ad8163d38babef5da6706134665aa5275810eaa": {
+      "workers": {
+        "app/admin/parts/page": {
+          "moduleId": "[project]/frontend/.next-internal/server/app/admin/parts/page/actions.js { ACTIONS_MODULE0 => \"[project]/frontend/lib/actions/admin-parts.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "deletePartAction",
+          "filename": "frontend/lib/actions/admin-parts.ts"
+        }
+      },
+      "layer": {
+        "app/admin/parts/page": "rsc"
+      },
+      "filename": "frontend/lib/actions/admin-parts.ts",
+      "exportedName": "deletePartAction"
+    },
+    "40bd2d0e84dcd065ad244654164b807fb890e6e8a5": {
+      "workers": {
+        "app/admin/parts/page": {
+          "moduleId": "[project]/frontend/.next-internal/server/app/admin/parts/page/actions.js { ACTIONS_MODULE0 => \"[project]/frontend/lib/actions/admin-parts.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "createPartAction",
+          "filename": "frontend/lib/actions/admin-parts.ts"
+        }
+      },
+      "layer": {
+        "app/admin/parts/page": "rsc"
+      },
+      "filename": "frontend/lib/actions/admin-parts.ts",
+      "exportedName": "createPartAction"
+    },
+    "40ffb39d185511b700e6f58c6f12cec278b1b1ac41": {
+      "workers": {
+        "app/admin/parts/page": {
+          "moduleId": "[project]/frontend/.next-internal/server/app/admin/parts/page/actions.js { ACTIONS_MODULE0 => \"[project]/frontend/lib/actions/admin-parts.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "updatePartAction",
+          "filename": "frontend/lib/actions/admin-parts.ts"
+        }
+      },
+      "layer": {
+        "app/admin/parts/page": "rsc"
+      },
+      "filename": "frontend/lib/actions/admin-parts.ts",
+      "exportedName": "updatePartAction"
+    }
+  },
+  "edge": {},
+  "encryptionKey": "EmUVrM4/wYBo5WHvCJruTjJugmuzUZMoPba+/S+axn0="
+}
