@@ -1103,6 +1103,10 @@
     max-width: var(--container-7xl);
   }
 
+  .max-w-52 {
+    max-width: calc(var(--spacing) * 52);
+  }
+
   .max-w-72 {
     max-width: calc(var(--spacing) * 72);
   }
@@ -2028,6 +2032,10 @@
 
   .align-middle {
     vertical-align: middle;
+  }
+
+  .align-top {
+    vertical-align: top;
   }
 
   .font-mono {

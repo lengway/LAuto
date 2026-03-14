@@ -50,11 +50,14 @@ async function resolveBrandIdByName(brandName: string): Promise<string> {
   return brand.id;
 }
 
-async function buildUniqueCarSlug(base: string, currentCarId?: string): Promise<string> {
+async function buildUniqueCarSlug(base: string, brandId: string, currentCarId?: string): Promise<string> {
   const normalized = base || `car-${Date.now()}`;
 
-  const existing = await prisma.car.findUnique({
-    where: { slug: normalized },
+  const existing = await prisma.car.findFirst({
+    where: {
+      brandId,
+      slug: normalized,
+    },
     select: { id: true },
   });
 
@@ -86,7 +89,7 @@ export async function createCarAction(formData: FormData) {
   const brandId = await resolveBrandIdByName(parsed.brandName);
 
   const slugBase = toSlug([parsed.model, parsed.generation].filter(Boolean).join(" "));
-  const slug = await buildUniqueCarSlug(slugBase);
+  const slug = await buildUniqueCarSlug(slugBase, brandId);
 
   const car = await prisma.car.create({
     data: {
@@ -117,7 +120,7 @@ export async function updateCarAction(formData: FormData) {
   });
 
   const slugBase = toSlug([parsed.model, parsed.generation].filter(Boolean).join(" "));
-  const slug = await buildUniqueCarSlug(slugBase, carId);
+  const slug = await buildUniqueCarSlug(slugBase, brandId, carId);
 
   const car = await prisma.car.update({
     where: { id: carId },

@@ -75,9 +75,9 @@ type DbPartRow = {
   id: string;
   title: string;
   slug: string;
-  oemNumber: string;
+  oemNumber: string | null;
   categoryId: string;
-  priceFrom: number | null;
+  priceFrom: unknown;
   inStock: boolean;
   category: {
     name: string;
@@ -151,6 +151,27 @@ const fallbackVinRows: AdminVinPatternRow[] = [
   { id: "fallback-vin-6", pattern: "LJ1", carId: "car5", carSlug: "jac-js6", carFullName: "JAC JS6" },
 ];
 
+function toPlainNumber(input: unknown): number | null {
+  if (input === null || input === undefined || input === "") {
+    return null;
+  }
+
+  if (typeof input === "number") {
+    return Number.isFinite(input) ? input : null;
+  }
+
+  if (typeof input === "object" && input !== null) {
+    const maybeDecimal = input as { toNumber?: unknown };
+    if (typeof maybeDecimal.toNumber === "function") {
+      const numeric = maybeDecimal.toNumber();
+      return Number.isFinite(numeric) ? numeric : null;
+    }
+  }
+
+  const numeric = Number(String(input));
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
 function fallbackRows(): AdminPartRow[] {
   return fallbackParts.map((part) => ({
     id: part.id,
@@ -197,7 +218,7 @@ export async function listAdminParts(): Promise<AdminPartRow[]> {
       id: part.id,
       title: part.title,
       slug: part.slug,
-      oemNumber: part.oemNumber,
+      oemNumber: part.oemNumber ?? "",
       categoryId: part.categoryId,
       categoryName: part.category.name,
       compatibleCars: part.compatibilities.map((entry) =>
@@ -207,7 +228,7 @@ export async function listAdminParts(): Promise<AdminPartRow[]> {
       ),
       compatibleCarSlugs: part.compatibilities.map((entry) => entry.car.slug),
       imageUrl: part.images[0]?.url ?? null,
-      priceFrom: part.priceFrom,
+      priceFrom: toPlainNumber(part.priceFrom),
       inStock: part.inStock,
     }));
   } catch {

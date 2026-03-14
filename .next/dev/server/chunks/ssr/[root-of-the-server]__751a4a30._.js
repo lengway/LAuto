@@ -490,6 +490,23 @@ const fallbackVinRows = [
         carFullName: "JAC JS6"
     }
 ];
+function toPlainNumber(input) {
+    if (input === null || input === undefined || input === "") {
+        return null;
+    }
+    if (typeof input === "number") {
+        return Number.isFinite(input) ? input : null;
+    }
+    if (typeof input === "object" && input !== null) {
+        const maybeDecimal = input;
+        if (typeof maybeDecimal.toNumber === "function") {
+            const numeric = maybeDecimal.toNumber();
+            return Number.isFinite(numeric) ? numeric : null;
+        }
+    }
+    const numeric = Number(String(input));
+    return Number.isFinite(numeric) ? numeric : null;
+}
 function fallbackRows() {
     return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$services$2f$catalog$2d$fallback$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["fallbackParts"].map((part)=>({
             id: part.id,
@@ -534,7 +551,7 @@ async function listAdminParts() {
                 id: part.id,
                 title: part.title,
                 slug: part.slug,
-                oemNumber: part.oemNumber,
+                oemNumber: part.oemNumber ?? "",
                 categoryId: part.categoryId,
                 categoryName: part.category.name,
                 compatibleCars: part.compatibilities.map((entry)=>[
@@ -544,7 +561,7 @@ async function listAdminParts() {
                     ].filter(Boolean).join(" ")),
                 compatibleCarSlugs: part.compatibilities.map((entry)=>entry.car.slug),
                 imageUrl: part.images[0]?.url ?? null,
-                priceFrom: part.priceFrom,
+                priceFrom: toPlainNumber(part.priceFrom),
                 inStock: part.inStock
             }));
     } catch  {

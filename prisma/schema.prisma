@@ -14,6 +14,15 @@ enum ImportJobStatus {
   failed
 }
 
+enum ImportStage {
+  raw
+  parsed
+  normalized
+  validated
+  imported
+  failed
+}
+
 model Brand {
   id        String   @id @default(cuid())
   name      String   @unique
@@ -37,13 +46,14 @@ model Category {
   parts     Part[]
 
   @@index([parentId])
+  @@index([slug])
 }
 
 model Car {
   id           String              @id @default(cuid())
   brandId      String
   model        String
-  slug         String              @unique
+  slug         String
   generation   String?
   years        String?
   createdAt    DateTime            @default(now())
@@ -54,16 +64,20 @@ model Car {
   vinPatterns  VinPattern[]
 
   @@index([brandId])
+  @@unique([brandId, slug])
 }
 
 model Part {
   id             String              @id @default(cuid())
-  oemNumber      String              @unique
+  oemNumber      String?
   slug           String              @unique
   title          String
   categoryId     String
+  side           String?
+  position       String?
   description    String?
-  priceFrom      Int?
+  priceFrom      Decimal?            @db.Decimal(10, 2)
+  isVisible      Boolean             @default(true)
   inStock        Boolean             @default(true)
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
@@ -73,6 +87,8 @@ model Part {
   images         Image[]
 
   @@index([categoryId])
+  @@index([oemNumber])
+  @@index([title])
 }
 
 model PartCompatibility {
@@ -103,12 +119,13 @@ model Image {
 
 model VinPattern {
   id        String   @id @default(cuid())
-  pattern   String   @unique
+  pattern   String
   carId     String
 
   car       Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
 
   @@index([carId])
+  @@index([pattern])
 }
 
 model ImportJob {
@@ -116,6 +133,41 @@ model ImportJob {
   file      String
   status    ImportJobStatus @default(pending)
   summary   Json?
+  rowsTotal Int?
+  rowsSuccess Int?
+  rowsFailed Int?
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
+
+  rawRows   RawImportRow[]
+}
+
+model RawImportRow {
+  id          String      @id @default(cuid())
+  jobId       String
+  line        Int
+  article     String?
+  oem         String?
+  name        String?
+  brand       String?
+  price       String?
+  rawJson     Json?
+  stage       ImportStage @default(raw)
+  createdAt   DateTime    @default(now())
+
+  job         ImportJob   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([jobId, line])
+  @@index([jobId, stage])
+}
+
+model ModelAlias {
+  id        String   @id @default(cuid())
+  alias     String   @unique
+  brand     String
+  model     String
+  createdAt DateTime @default(now())
+
+  @@index([alias])
 }

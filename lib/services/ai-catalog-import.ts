@@ -129,59 +129,202 @@ export async function parseCatalogTextWithAi(
     : "";
 
   const prompt = `
-Ты парсер каталога автозапчастей. Тебе дадут сырой текст, где каждая строка может содержать данные детали.
+You are an automotive catalog data normalization engine.
 
-Задача:
-1) Преобразовать текст в JSON.
-2) Вернуть валидные строки для импорта или ошибки по недостающим полям.
+Your job is to transform raw auto parts lists into structured catalog data suitable for database import.
 
-Обязательные поля для каждой детали:
-- title
-- brand
-- model
-- category
+The input may contain:
 
-Необязательные:
-- oem
-- price
-- image
+* inconsistent brands
+* missing categories
+* duplicated rows
+* scientific notation OEM codes
+* missing models
+* incorrect brand values such as "Китай"
 
-ВАЖНО:
-- Всегда указывай line (номер строки исходного сообщения, начиная с 1).
-- category может быть новой, если такой категории нет в базе — это не ошибка.
-- Определи model из текста строки, учитывая справочник моделей из БД.
-- Если в строке нет точной модели, ставь model = "-" и НЕ добавляй ошибку по model.
-- Если поля не хватает, добавь объект ошибки: { line, field, message }.
-- Если есть хотя бы одна ошибка, status = "needs_clarification".
-- Если ошибок нет, status = "ok".
-- Ответ ТОЛЬКО в JSON-объекте без markdown.
+You must normalize, validate, and structure the data.
 
-${knownModelsBlock}
+Return ONLY JSON.
 
-Формат ответа:
+Before returning the final answer, you MUST self-validate JSON syntax.
+If JSON is invalid, fix it and validate again.
+
+JSON validity checklist:
+* all keys and string values use double quotes
+* no trailing commas
+* all arrays and objects are properly closed
+* no markdown, comments, or extra text outside the JSON object
+* output must be directly parseable by JSON.parse
+
+---
+
+# OUTPUT FORMAT
+
+Return the following structure:
+
 {
-  "status": "ok" | "needs_clarification",
-  "rows": [
-    {
-      "line": 1,
-      "title": "...",
-      "oem": "...",
-      "brand": "...",
-      "model": "...",
-      "category": "...",
-      "price": "...",
-      "image": "..."
-    }
-  ],
-  "errors": [
-    {
-      "line": 2,
-      "field": "oem",
-      "message": "Не найден OEM код"
-    }
-  ],
-  "notes": ["..."]
+"status": "ok",
+"rows": [],
+"errors": [],
+"notes": []
 }
+
+---
+
+# ROW STRUCTURE
+
+Each row must contain:
+
+{
+"line": number,
+"title": string,
+"brand": string,
+"model": string,
+"category": string,
+"oem": string|null,
+"price": number|null
+}
+
+Rules:
+
+* price must be a number
+* oem must be a string or null
+* category must never be "-"
+* brand must be normalized
+* model must not be "-"
+
+---
+
+# BRAND NORMALIZATION
+
+If brand is "Китай", infer the brand from the model.
+
+Brand mapping rules:
+
+Tiggo → Chery
+Arrizo → Chery
+
+CS → Changan
+Alsvin → Changan
+UNI → Changan
+
+Coolray → Geely
+Atlas → Geely
+
+F7 → Haval
+H6 → Haval
+
+J7 → JAC
+JS → JAC
+
+If brand cannot be determined, move the row to errors.
+
+---
+
+# CATEGORY DETECTION
+
+Infer category from part name.
+
+Examples:
+
+Амортизатор → подвеска
+Стойка стабилизатора → подвеска
+Втулка стабилизатора → подвеска
+
+Бампер → кузов
+Балка бампера → кузов
+Дверь → кузов
+Крыло → кузов
+
+Датчик → электроника
+Датчик кислорода → электроника
+
+Фильтр → двигатель
+
+Бачок → система охлаждения
+
+If category cannot be inferred, set:
+
+"category": "прочее"
+
+---
+
+# OEM VALIDATION
+
+If OEM value appears like scientific notation:
+
+Example:
+9,908E+16
+
+Then treat it as invalid and set:
+
+"oem": null
+
+OEM must always be returned as a string.
+
+---
+
+# PRICE NORMALIZATION
+
+Convert price strings to numbers.
+
+Example:
+
+"11830" → 11830
+
+If price is missing:
+
+price = null
+
+---
+
+# DUPLICATE HANDLING
+
+Remove duplicates using this rule:
+
+(title + brand + model + oem)
+
+If duplicate rows exist, keep only the first.
+
+---
+
+# INVALID ROWS
+
+Move rows to "errors" if:
+
+* brand cannot be determined
+* model is "-"
+* title is empty
+
+Error format:
+
+{
+"line": number,
+"field": "brand|model|title|oem",
+"message": "description"
+}
+
+---
+
+# IMPORTANT RULES
+
+Never invent OEM numbers.
+
+Never output scientific notation.
+
+Never output brand = "Китай".
+
+Never output category = "-".
+
+---
+
+# FINAL STEP
+
+Return clean rows ready for database import.
+${knownModelsBlock ? `
+
+Known models from database (use as optional disambiguation context):
+${knownModelsBlock}` : ""}
 `;
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {

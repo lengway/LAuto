@@ -102,7 +102,7 @@ export default async function AdminPartsPage() {
           <TableBody>
             {parts.map((part) => (
               <TableRow key={part.id}>
-                <TableCell>{part.title}</TableCell>
+                <TableCell className="max-w-52 whitespace-normal wrap-break-word align-top">{part.title}</TableCell>
                 <TableCell>{part.oemNumber}</TableCell>
                 <TableCell>
                   {part.imageUrl ? (

@@ -27,7 +27,7 @@ export default async function AdminImportPage() {
       <section className="space-y-4 rounded-xl border border-border/60 p-4">
         <h2 className="text-lg font-semibold">Импорт запчастей из Excel / CSV</h2>
         <p className="text-sm text-muted-foreground">
-          Обязательные колонки: title, oem, brand, model, category, price, image.
+          Обязательные колонки: article, oem, name, brand, price.
           Поддерживаемые форматы: .csv, .xls, .xlsx.
         </p>
 
