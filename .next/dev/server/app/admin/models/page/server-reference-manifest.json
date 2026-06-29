@@ -1,0 +1,50 @@
+{
+  "node": {
+    "40319784785f637f998a87eb4cf5ca13b92cde0aa6": {
+      "workers": {
+        "app/admin/models/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/models/page/actions.js { ACTIONS_MODULE0 => \"[project]/lib/actions/admin-models.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "updateModelAction",
+          "filename": "lib/actions/admin-models.ts"
+        }
+      },
+      "layer": {
+        "app/admin/models/page": "rsc"
+      },
+      "exportedName": "updateModelAction",
+      "filename": "lib/actions/admin-models.ts"
+    },
+    "40423c18d20f43ebc790274e004eb3f1096c51e2ba": {
+      "workers": {
+        "app/admin/models/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/models/page/actions.js { ACTIONS_MODULE0 => \"[project]/lib/actions/admin-models.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "createModelAction",
+          "filename": "lib/actions/admin-models.ts"
+        }
+      },
+      "layer": {
+        "app/admin/models/page": "rsc"
+      },
+      "exportedName": "createModelAction",
+      "filename": "lib/actions/admin-models.ts"
+    },
+    "40827d5d7a55146b9d852fc019ea758eb8172183ec": {
+      "workers": {
+        "app/admin/models/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/models/page/actions.js { ACTIONS_MODULE0 => \"[project]/lib/actions/admin-models.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "deleteModelAction",
+          "filename": "lib/actions/admin-models.ts"
+        }
+      },
+      "layer": {
+        "app/admin/models/page": "rsc"
+      },
+      "exportedName": "deleteModelAction",
+      "filename": "lib/actions/admin-models.ts"
+    }
+  },
+  "edge": {}
+}

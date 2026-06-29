@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import ReactMarkdown from "react-markdown";
 
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
+import { PartGallery } from "@/components/parts/part-gallery";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { buildWhatsAppLink } from "@/lib/config";
@@ -29,7 +30,7 @@ export async function generateMetadata({ params }: PartPageProps): Promise<Metad
 
   return {
     title: `${part.title} ${primaryCar} — купить в Казахстане`,
-    description: `OEM ${part.oemNumber}. Совместимость: ${part.compatibleCars.map((car) => car.fullName).join(", ") || "уточняйте у менеджера"}. Заказ через WhatsApp с доставкой по Казахстану.`,
+    description: `Совместимость: ${part.compatibleCars.map((car) => car.fullName).join(", ") || "уточняйте у менеджера"}. Заказ через WhatsApp с доставкой по Казахстану.`,
   };
 }
 
@@ -46,7 +47,6 @@ export default async function PartPage({ params }: PartPageProps) {
     "",
     "Меня интересует следующая запчасть:",
     `${part.title}`,
-    `OEM: ${part.oemNumber}`,
     part.compatibleCars.length
       ? `Совместимость: ${part.compatibleCars.map((car) => car.fullName).join(", ")}`
       : "",
@@ -56,6 +56,12 @@ export default async function PartPage({ params }: PartPageProps) {
     .filter(Boolean)
     .join("\n");
 
+  const imageUrls = part.imageUrls.length
+    ? part.imageUrls
+    : part.imageUrl
+      ? [part.imageUrl]
+      : [];
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-10">
       <Link href="/catalog" className="text-sm text-muted-foreground hover:text-foreground">
@@ -63,11 +69,7 @@ export default async function PartPage({ params }: PartPageProps) {
       </Link>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="relative min-h-72 overflow-hidden rounded-xl border border-border/60 bg-muted/40">
-          {part.imageUrl ? (
-            <Image src={part.imageUrl} alt={part.title} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
-          ) : null}
-        </div>
+        <PartGallery title={part.title} imageUrls={imageUrls} />
 
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -76,9 +78,27 @@ export default async function PartPage({ params }: PartPageProps) {
           </div>
 
           <h1 className="text-2xl font-semibold sm:text-3xl">{part.title}</h1>
-          <p className="text-sm text-muted-foreground">OEM: {part.oemNumber}</p>
 
-          {part.description ? <p className="text-sm text-muted-foreground">{part.description}</p> : null}
+          {part.description ? (
+            <div className="space-y-2 rounded-xl border border-border/60 p-4 text-sm text-muted-foreground">
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="leading-relaxed">{children}</p>,
+                  ul: ({ children }) => <ul className="list-disc space-y-1 pl-5">{children}</ul>,
+                  ol: ({ children }) => <ol className="list-decimal space-y-1 pl-5">{children}</ol>,
+                  h2: ({ children }) => <h2 className="text-base font-semibold text-foreground">{children}</h2>,
+                  h3: ({ children }) => <h3 className="text-sm font-semibold text-foreground">{children}</h3>,
+                  a: ({ children, href }) => (
+                    <a href={href} target="_blank" rel="noreferrer" className="underline underline-offset-2">
+                      {children}
+                    </a>
+                  ),
+                }}
+              >
+                {part.description}
+              </ReactMarkdown>
+            </div>
+          ) : null}
 
           {part.priceFrom ? <p className="text-lg font-semibold">От {part.priceFrom.toLocaleString()} ₸</p> : null}
 
@@ -92,7 +112,7 @@ export default async function PartPage({ params }: PartPageProps) {
                   </Link>
                 ))
               ) : (
-                <span className="text-sm text-muted-foreground">Уточните совместимость у менеджера по VIN.</span>
+                <span className="text-sm text-muted-foreground">Уточните совместимость у менеджера.</span>
               )}
             </div>
           </div>
@@ -105,7 +125,6 @@ export default async function PartPage({ params }: PartPageProps) {
                 partId: part.id,
                 title: part.title,
                 slug: part.slug,
-                oemNumber: part.oemNumber,
                 compatibleCars: part.compatibleCars.map((car) => car.fullName),
                 image: part.imageUrl,
               }}

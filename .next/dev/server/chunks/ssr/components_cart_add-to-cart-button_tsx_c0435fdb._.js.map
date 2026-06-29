@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/lengway/Desktop/Projects/lauto/components/cart/add-to-cart-button.tsx"],"sourcesContent":["\"use client\";\r\n\r\nimport { Button } from \"@/components/ui/button\";\r\nimport { useCart } from \"@/components/cart/cart-provider\";\r\n\r\ntype AddToCartButtonProps = {\r\n  part: {\r\n    partId: string;\r\n    title: string;\r\n    slug: string;\r\n    compatibleCars: string[];\r\n    image: string | null;\r\n  };\r\n  className?: string;\r\n  size?: \"default\" | \"sm\" | \"lg\" | \"icon\";\r\n};\r\n\r\nexport function AddToCartButton({ part, className, size = \"sm\" }: AddToCartButtonProps) {\r\n  const { addItem } = useCart();\r\n\r\n  return (\r\n    <Button\r\n      size={size}\r\n      className={className}\r\n      onClick={() => {\r\n        addItem(part);\r\n      }}\r\n      aria-label={`Добавить ${part.title} в корзину`}\r\n    >\r\n      В корзину\r\n    </Button>\r\n  );\r\n}\r\n"],"names":[],"mappings":";;;;;AAEA;AACA;AAHA;;;;AAiBO,SAAS,gBAAgB,EAAE,IAAI,EAAE,SAAS,EAAE,OAAO,IAAI,EAAwB;IACpF,MAAM,EAAE,OAAO,EAAE,GAAG,IAAA,kJAAO;IAE3B,qBACE,6VAAC,qIAAM;QACL,MAAM;QACN,WAAW;QACX,SAAS;YACP,QAAQ;QACV;QACA,cAAY,CAAC,SAAS,EAAE,KAAK,KAAK,CAAC,UAAU,CAAC;kBAC/C;;;;;;AAIL"}}]
+}

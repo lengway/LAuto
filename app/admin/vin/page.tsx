@@ -1,5 +1,20 @@
 import type { Metadata } from "next";
 
+export const metadata: Metadata = {
+  title: "VIN отключен | Chinalending",
+};
+
+export default function AdminVinPage() {
+  return (
+    <div className="rounded-xl border border-border/60 p-4 text-sm text-muted-foreground">
+      VIN-паттерны удалены из новой структуры БД. Используйте каталог по схеме: марка → модель → детали.
+    </div>
+  );
+}
+
+/*
+import type { Metadata } from "next";
+
 import {
   createVinPatternAction,
   deleteVinPatternAction,
@@ -130,3 +145,4 @@ export default async function AdminVinPage() {
     </div>
   );
 }
+*/

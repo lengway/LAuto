@@ -1,20 +1,4 @@
 {
-  "node": {
-    "60ba1169f2f45461ab8ae027201b6b9cd9c2d889d1": {
-      "workers": {
-        "app/admin/ai-import/page": {
-          "moduleId": "[project]/.next-internal/server/app/admin/ai-import/page/actions.js { ACTIONS_MODULE0 => \"[project]/lib/actions/admin-ai-import.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": false,
-          "exportedName": "importPartsFromAiAction",
-          "filename": "lib/actions/admin-ai-import.ts"
-        }
-      },
-      "layer": {
-        "app/admin/ai-import/page": "action-browser"
-      },
-      "exportedName": "importPartsFromAiAction",
-      "filename": "lib/actions/admin-ai-import.ts"
-    }
-  },
+  "node": {},
   "edge": {}
 }

@@ -2,7 +2,6 @@ export type CartItem = {
   partId: string;
   title: string;
   slug: string;
-  oemNumber: string;
   compatibleCars: string[];
   image: string | null;
   quantity: number;
@@ -20,7 +19,6 @@ export function createWhatsAppOrderMessage(items: CartItem[]): string {
 
   items.forEach((item, index) => {
     lines.push(`${index + 1}. ${item.title} × ${item.quantity}`);
-    lines.push(`OEM: ${item.oemNumber}`);
 
     if (item.compatibleCars.length) {
       lines.push(`Совместимость: ${item.compatibleCars.join(", ")}`);

@@ -1,14 +1,13 @@
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
 
--- CreateEnum
-CREATE TYPE "public"."ImportJobStatus" AS ENUM ('pending', 'processing', 'completed', 'failed');
-
 -- CreateTable
-CREATE TABLE "public"."Brand" (
+CREATE TABLE "Brand" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
+    "description" TEXT,
+    "imageUrl" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -16,7 +15,7 @@ CREATE TABLE "public"."Brand" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Category" (
+CREATE TABLE "Category" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
@@ -28,28 +27,32 @@ CREATE TABLE "public"."Category" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Car" (
+CREATE TABLE "Model" (
     "id" TEXT NOT NULL,
     "brandId" TEXT NOT NULL,
     "model" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
+    "description" TEXT,
+    "imageUrl" TEXT,
     "generation" TEXT,
     "years" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "Car_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Model_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "public"."Part" (
+CREATE TABLE "Part" (
     "id" TEXT NOT NULL,
-    "oemNumber" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "categoryId" TEXT NOT NULL,
+    "side" TEXT,
+    "position" TEXT,
     "description" TEXT,
-    "priceFrom" INTEGER,
+    "priceFrom" DECIMAL(10,2),
+    "isVisible" BOOLEAN NOT NULL DEFAULT true,
     "inStock" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -58,16 +61,25 @@ CREATE TABLE "public"."Part" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."PartCompatibility" (
+CREATE TABLE "PartCategory" (
+    "id" TEXT NOT NULL,
+    "partId" TEXT NOT NULL,
+    "categoryId" TEXT NOT NULL,
+
+    CONSTRAINT "PartCategory_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PartFitment" (
     "id" TEXT NOT NULL,
     "partId" TEXT NOT NULL,
     "carId" TEXT NOT NULL,
 
-    CONSTRAINT "PartCompatibility_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "PartFitment_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "public"."Image" (
+CREATE TABLE "Image" (
     "id" TEXT NOT NULL,
     "partId" TEXT NOT NULL,
     "url" TEXT NOT NULL,
@@ -77,93 +89,81 @@ CREATE TABLE "public"."Image" (
     CONSTRAINT "Image_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "public"."VinPattern" (
-    "id" TEXT NOT NULL,
-    "pattern" TEXT NOT NULL,
-    "carId" TEXT NOT NULL,
-
-    CONSTRAINT "VinPattern_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "public"."ImportJob" (
-    "id" TEXT NOT NULL,
-    "file" TEXT NOT NULL,
-    "status" "public"."ImportJobStatus" NOT NULL DEFAULT 'pending',
-    "summary" JSONB,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "ImportJob_pkey" PRIMARY KEY ("id")
-);
+-- CreateIndex
+CREATE UNIQUE INDEX "Brand_name_key" ON "Brand"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Brand_name_key" ON "public"."Brand"("name");
+CREATE UNIQUE INDEX "Brand_slug_key" ON "Brand"("slug");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Brand_slug_key" ON "public"."Brand"("slug");
+CREATE UNIQUE INDEX "Category_slug_key" ON "Category"("slug");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Category_slug_key" ON "public"."Category"("slug");
+CREATE INDEX "Category_parentId_idx" ON "Category"("parentId");
 
 -- CreateIndex
-CREATE INDEX "Category_parentId_idx" ON "public"."Category"("parentId");
+CREATE INDEX "Category_slug_idx" ON "Category"("slug");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Car_slug_key" ON "public"."Car"("slug");
+CREATE INDEX "Model_brandId_idx" ON "Model"("brandId");
 
 -- CreateIndex
-CREATE INDEX "Car_brandId_idx" ON "public"."Car"("brandId");
+CREATE UNIQUE INDEX "Model_brandId_slug_key" ON "Model"("brandId", "slug");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Part_oemNumber_key" ON "public"."Part"("oemNumber");
+CREATE UNIQUE INDEX "Part_slug_key" ON "Part"("slug");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Part_slug_key" ON "public"."Part"("slug");
+CREATE INDEX "Part_categoryId_idx" ON "Part"("categoryId");
 
 -- CreateIndex
-CREATE INDEX "Part_categoryId_idx" ON "public"."Part"("categoryId");
+CREATE INDEX "Part_title_idx" ON "Part"("title");
 
 -- CreateIndex
-CREATE INDEX "PartCompatibility_carId_idx" ON "public"."PartCompatibility"("carId");
+CREATE INDEX "PartFitment_carId_idx" ON "PartFitment"("carId");
 
 -- CreateIndex
-CREATE INDEX "PartCompatibility_partId_idx" ON "public"."PartCompatibility"("partId");
+CREATE INDEX "PartFitment_partId_idx" ON "PartFitment"("partId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PartCompatibility_partId_carId_key" ON "public"."PartCompatibility"("partId", "carId");
+CREATE UNIQUE INDEX "PartFitment_partId_carId_key" ON "PartFitment"("partId", "carId");
 
 -- CreateIndex
-CREATE INDEX "Image_partId_idx" ON "public"."Image"("partId");
+CREATE INDEX "PartCategory_partId_idx" ON "PartCategory"("partId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Image_partId_sortOrder_key" ON "public"."Image"("partId", "sortOrder");
+CREATE INDEX "PartCategory_categoryId_idx" ON "PartCategory"("categoryId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "VinPattern_pattern_key" ON "public"."VinPattern"("pattern");
+CREATE UNIQUE INDEX "PartCategory_partId_categoryId_key" ON "PartCategory"("partId", "categoryId");
 
 -- CreateIndex
-CREATE INDEX "VinPattern_carId_idx" ON "public"."VinPattern"("carId");
+CREATE INDEX "Image_partId_idx" ON "Image"("partId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Image_partId_sortOrder_key" ON "Image"("partId", "sortOrder");
 
 -- AddForeignKey
-ALTER TABLE "public"."Category" ADD CONSTRAINT "Category_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "public"."Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Category" ADD CONSTRAINT "Category_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Car" ADD CONSTRAINT "Car_brandId_fkey" FOREIGN KEY ("brandId") REFERENCES "public"."Brand"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Model" ADD CONSTRAINT "Model_brandId_fkey" FOREIGN KEY ("brandId") REFERENCES "Brand"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Part" ADD CONSTRAINT "Part_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "public"."Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Part" ADD CONSTRAINT "Part_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."PartCompatibility" ADD CONSTRAINT "PartCompatibility_partId_fkey" FOREIGN KEY ("partId") REFERENCES "public"."Part"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "PartCategory" ADD CONSTRAINT "PartCategory_partId_fkey" FOREIGN KEY ("partId") REFERENCES "Part"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."PartCompatibility" ADD CONSTRAINT "PartCompatibility_carId_fkey" FOREIGN KEY ("carId") REFERENCES "public"."Car"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "PartCategory" ADD CONSTRAINT "PartCategory_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Image" ADD CONSTRAINT "Image_partId_fkey" FOREIGN KEY ("partId") REFERENCES "public"."Part"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "PartFitment" ADD CONSTRAINT "PartFitment_partId_fkey" FOREIGN KEY ("partId") REFERENCES "Part"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."VinPattern" ADD CONSTRAINT "VinPattern_carId_fkey" FOREIGN KEY ("carId") REFERENCES "public"."Car"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "PartFitment" ADD CONSTRAINT "PartFitment_carId_fkey" FOREIGN KEY ("carId") REFERENCES "Model"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Image" ADD CONSTRAINT "Image_partId_fkey" FOREIGN KEY ("partId") REFERENCES "Part"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 

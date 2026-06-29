@@ -8,7 +8,6 @@ type AddToCartButtonProps = {
     partId: string;
     title: string;
     slug: string;
-    oemNumber: string;
     compatibleCars: string[];
     image: string | null;
   };

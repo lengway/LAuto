@@ -1,95 +1,126 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { CatalogSearchForm } from "@/components/catalog/catalog-search-form";
 import { PartsGrid } from "@/components/catalog/parts-grid";
 import { Badge } from "@/components/ui/badge";
-import { listCatalogBrands, listCatalogCars, listCatalogCategories, listCatalogParts } from "@/lib/services/catalog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { listCatalogBrands, listCatalogCars, listCatalogParts } from "@/lib/services/catalog";
 
 export const metadata: Metadata = {
   title: "Каталог запчастей | Chinalending",
-  description: "Подробный каталог китайских автозапчастей с поиском по OEM, VIN, бренду и модели.",
+  description: "Каталог запчастей по шагам: марка, модель, список всех деталей.",
 };
 
 type CatalogPageProps = {
   searchParams: Promise<{
-    q?: string;
-    category?: string;
     brand?: string;
     car?: string;
-    stock?: string;
-    min?: string;
-    max?: string;
-    sort?: "newest" | "price_asc" | "price_desc" | "title_asc";
   }>;
 };
 
 export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   const params = await searchParams;
-  const query = params.q?.trim() ?? "";
-  const categorySlug = params.category?.trim() || undefined;
   const brandSlug = params.brand?.trim() || undefined;
   const carSlug = params.car?.trim() || undefined;
-  const inStockOnly = params.stock === "1";
-  const minPrice = params.min && params.min.trim() ? Number(params.min) : undefined;
-  const maxPrice = params.max && params.max.trim() ? Number(params.max) : undefined;
-  const sort = params.sort ?? "newest";
 
-  const [parts, categories, brands, cars] = await Promise.all([
-    listCatalogParts({
-      query,
-      categorySlug,
-      brandSlug,
-      carSlug,
-      inStockOnly,
-      minPrice,
-      maxPrice,
-      sort,
-    }),
-    listCatalogCategories(),
+  const [brands, cars, parts] = await Promise.all([
     listCatalogBrands(),
-    listCatalogCars(),
+    listCatalogCars(brandSlug),
+    carSlug
+      ? listCatalogParts({
+          brandSlug,
+          carSlug,
+          sort: "title_asc",
+        })
+      : Promise.resolve([]),
   ]);
+
+  const selectedBrand = brands.find((brand) => brand.slug === brandSlug) ?? null;
+  const selectedCar = cars.find((car) => car.slug === carSlug) ?? null;
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-10">
       <section className="space-y-3">
         <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Chinalending Kazakhstan</p>
-        <h1 className="text-2xl font-semibold sm:text-3xl">Подробный каталог автозапчастей</h1>
-        <p className="text-sm text-muted-foreground">Ищите по названию, OEM, бренду, модели, цене и наличию. С карточки можно сразу отправить запрос в WhatsApp.</p>
+        <h1 className="text-2xl font-semibold sm:text-3xl">Каталог: марка → модель → все детали</h1>
+        <p className="text-sm text-muted-foreground">Шаг 1: выберите марку карточкой. Шаг 2: выберите модель карточкой. Шаг 3: получите список деталей.</p>
       </section>
 
-      <CatalogSearchForm
-        defaultQuery={query}
-        categories={categories}
-        brands={brands}
-        cars={cars}
-        defaultCategorySlug={categorySlug}
-        defaultBrandSlug={brandSlug}
-        defaultCarSlug={carSlug}
-        defaultInStockOnly={inStockOnly}
-        defaultMinPrice={params.min}
-        defaultMaxPrice={params.max}
-        defaultSort={sort}
-      />
-
-      <section className="flex flex-wrap gap-2">
-        {categories.map((category) => (
-          <Link key={category.id} href={`/catalog?category=${category.slug}`}>
-            <Badge variant="outline" className="py-1">
-              {category.name} · {category.partsCount}
-            </Badge>
+      {selectedBrand ? (
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <Badge variant="outline">Марка: {selectedBrand.name}</Badge>
+          {selectedCar ? <Badge variant="secondary">Модель: {selectedCar.fullName}</Badge> : null}
+          <Link href="/catalog" className="text-xs text-muted-foreground underline underline-offset-4">
+            Сбросить выбор
           </Link>
-        ))}
-      </section>
-
-      {parts.length ? (
-        <PartsGrid parts={parts} />
-      ) : (
-        <div className="rounded-xl border border-dashed border-border/70 p-8 text-center text-sm text-muted-foreground">
-          По текущим параметрам ничего не найдено. Измените фильтры или попробуйте другой OEM.
         </div>
-      )}
+      ) : null}
+
+      {!selectedBrand ? (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">1) Выберите марку</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {brands.map((brand) => (
+              <Link key={brand.slug} href={`/catalog?brand=${encodeURIComponent(brand.slug)}`}>
+                <Card className="h-full border-border/60 bg-card/90 transition-colors hover:border-primary/60">
+                  <CardHeader>
+                    <CardTitle className="text-base">{brand.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-border/70 bg-muted/40 text-xs text-muted-foreground">
+                      PNG марки: /public/placeholders/brands/{brand.slug}.png
+                    </div>
+                    <p className="text-xs text-muted-foreground">Моделей в базе: {brand.carsCount}</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {selectedBrand && !selectedCar ? (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">2) Выберите модель</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {cars.map((car) => (
+              <Link
+                key={car.id}
+                href={`/catalog?brand=${encodeURIComponent(selectedBrand.slug)}&car=${encodeURIComponent(car.slug)}`}
+              >
+                <Card className="h-full border-border/60 bg-card/90 transition-colors hover:border-primary/60">
+                  <CardHeader>
+                    <CardTitle className="text-base">{car.fullName}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-border/70 bg-muted/40 text-xs text-muted-foreground">
+                      PNG модели: /public/placeholders/models/{car.slug}.png
+                    </div>
+                    <p className="text-xs text-muted-foreground">Нажмите, чтобы открыть детали</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {selectedCar && parts.length ? (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">3) Детали для модели</h2>
+          <PartsGrid parts={parts} />
+        </section>
+      ) : selectedCar ? (
+        <div className="rounded-xl border border-dashed border-border/70 p-8 text-center text-sm text-muted-foreground">
+          Для выбранной модели пока нет деталей.
+        </div>
+      ) : null}
+
+      {selectedCar ? (
+        <Link href={`/car/${selectedCar.slug}`} className="text-sm text-muted-foreground underline underline-offset-4">
+          Открыть отдельную страницу модели
+        </Link>
+      ) : null}
     </div>
   );
 }

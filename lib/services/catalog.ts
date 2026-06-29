@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+﻿import { prisma } from "@/lib/db";
 
 import { fallbackCars, fallbackCategories, fallbackParts } from "./catalog-fallback";
 
@@ -6,7 +6,6 @@ export type CatalogPart = {
   id: string;
   slug: string;
   title: string;
-  oemNumber: string;
   description: string | null;
   category: {
     name: string;
@@ -15,6 +14,7 @@ export type CatalogPart = {
   priceFrom: number | null;
   inStock: boolean;
   imageUrl: string | null;
+  imageUrls: string[];
   compatibleCars: Array<{
     slug: string;
     fullName: string;
@@ -57,7 +57,6 @@ type DbPart = {
   id: string;
   slug: string;
   title: string;
-  oemNumber: string;
   description: string | null;
   priceFrom: number | null;
   inStock: boolean;
@@ -67,6 +66,7 @@ type DbPart = {
   };
   images: Array<{
     url: string;
+    sortOrder: number;
   }>;
   compatibilities: Array<{
     car: {
@@ -115,7 +115,6 @@ function mapFallbackPart(partSlug: string): CatalogPart | null {
     id: part.id,
     slug: part.slug,
     title: part.title,
-    oemNumber: part.oemNumber,
     description: part.description,
     category: {
       name: part.category.name,
@@ -124,6 +123,7 @@ function mapFallbackPart(partSlug: string): CatalogPart | null {
     priceFrom: part.priceFrom,
     inStock: part.inStock,
     imageUrl: part.imageUrl,
+    imageUrls: part.imageUrl ? [part.imageUrl] : [],
     compatibleCars: part.carSlugs
       .map((slug) => fallbackCars.find((car) => car.slug === slug))
       .filter((car): car is (typeof fallbackCars)[number] => Boolean(car))
@@ -173,7 +173,6 @@ function listFallbackParts(input: ListPartsInput = {}) {
 
       return (
         part.title.toLowerCase().includes(normalizedQuery) ||
-        part.oemNumber.toLowerCase().includes(normalizedQuery) ||
         part.description.toLowerCase().includes(normalizedQuery) ||
         part.category.name.toLowerCase().includes(normalizedQuery) ||
         compatibleCars.some((car) =>
@@ -209,8 +208,10 @@ function listFallbackCategories(): CatalogCategory[] {
   }));
 }
 
-function listFallbackCars(): CatalogCar[] {
-  return fallbackCars.map((car) => ({
+function listFallbackCars(brandSlug?: string): CatalogCar[] {
+  return fallbackCars
+    .filter((car) => (brandSlug ? car.brand.slug === brandSlug : true))
+    .map((car) => ({
     id: car.id,
     slug: car.slug,
     fullName: buildCarName(car.brand.name, car.model, car.generation),
@@ -320,12 +321,6 @@ export async function listCatalogParts(input: ListPartsInput = {}): Promise<Cata
                   },
                 },
                 {
-                  oemNumber: {
-                    contains: normalizedQuery,
-                    mode: "insensitive",
-                  },
-                },
-                {
                   description: {
                     contains: normalizedQuery,
                     mode: "insensitive",
@@ -394,7 +389,6 @@ export async function listCatalogParts(input: ListPartsInput = {}): Promise<Cata
       id: part.id,
       slug: part.slug,
       title: part.title,
-      oemNumber: part.oemNumber,
       description: part.description,
       category: {
         name: part.category.name,
@@ -403,6 +397,7 @@ export async function listCatalogParts(input: ListPartsInput = {}): Promise<Cata
       priceFrom: part.priceFrom,
       inStock: part.inStock,
       imageUrl: part.images[0]?.url ?? null,
+      imageUrls: part.images.map((image) => image.url),
       compatibleCars: part.compatibilities.map((compatibility) => ({
         slug: compatibility.car.slug,
         fullName: buildCarName(
@@ -443,9 +438,16 @@ export async function listCatalogCategories(): Promise<CatalogCategory[]> {
   }
 }
 
-export async function listCatalogCars(): Promise<CatalogCar[]> {
+export async function listCatalogCars(brandSlug?: string): Promise<CatalogCar[]> {
   try {
-    const cars = (await prisma.car.findMany({
+    const cars = (await prisma.model.findMany({
+      where: brandSlug
+        ? {
+            brand: {
+              slug: brandSlug,
+            },
+          }
+        : undefined,
       include: {
         brand: true,
       },
@@ -460,7 +462,7 @@ export async function listCatalogCars(): Promise<CatalogCar[]> {
       brandSlug: car.brand.slug,
     }));
   } catch {
-    return listFallbackCars();
+    return listFallbackCars(brandSlug);
   }
 }
 
@@ -470,7 +472,7 @@ export async function listCatalogBrands(): Promise<CatalogBrand[]> {
       include: {
         _count: {
           select: {
-            cars: true,
+            models: true,
           },
         },
       },
@@ -481,14 +483,14 @@ export async function listCatalogBrands(): Promise<CatalogBrand[]> {
       slug: string;
       name: string;
       _count: {
-        cars: number;
+        models: number;
       };
     }>;
 
     return brands.map((brand) => ({
       slug: brand.slug,
       name: brand.name,
-      carsCount: brand._count.cars,
+      carsCount: brand._count.models,
     }));
   } catch {
     return listFallbackBrands();
@@ -526,7 +528,6 @@ export async function getPartBySlug(slug: string): Promise<CatalogPart | null> {
       id: part.id,
       slug: part.slug,
       title: part.title,
-      oemNumber: part.oemNumber,
       description: part.description,
       category: {
         name: part.category.name,
@@ -535,6 +536,7 @@ export async function getPartBySlug(slug: string): Promise<CatalogPart | null> {
       priceFrom: part.priceFrom,
       inStock: part.inStock,
       imageUrl: part.images[0]?.url ?? null,
+      imageUrls: part.images.map((image) => image.url),
       compatibleCars: part.compatibilities.map((compatibility) => ({
         slug: compatibility.car.slug,
         fullName: buildCarName(
@@ -551,7 +553,7 @@ export async function getPartBySlug(slug: string): Promise<CatalogPart | null> {
 
 export async function getCarBySlug(slug: string): Promise<CatalogCar | null> {
   try {
-    const car = await prisma.car.findUnique({
+    const car = await prisma.model.findFirst({
       where: { slug },
       include: {
         brand: true,
@@ -584,3 +586,4 @@ export async function getCarBySlug(slug: string): Promise<CatalogCar | null> {
     };
   }
 }
+

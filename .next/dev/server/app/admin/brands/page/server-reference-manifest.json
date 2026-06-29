@@ -1,0 +1,50 @@
+{
+  "node": {
+    "401656e164a07fb7c0c2d98684084398c999281ed5": {
+      "workers": {
+        "app/admin/brands/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/brands/page/actions.js { ACTIONS_MODULE0 => \"[project]/lib/actions/admin-brands.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "deleteBrandAction",
+          "filename": "lib/actions/admin-brands.ts"
+        }
+      },
+      "layer": {
+        "app/admin/brands/page": "rsc"
+      },
+      "exportedName": "deleteBrandAction",
+      "filename": "lib/actions/admin-brands.ts"
+    },
+    "40d0008181309030359f56635a6a46ce67534d9098": {
+      "workers": {
+        "app/admin/brands/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/brands/page/actions.js { ACTIONS_MODULE0 => \"[project]/lib/actions/admin-brands.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "updateBrandAction",
+          "filename": "lib/actions/admin-brands.ts"
+        }
+      },
+      "layer": {
+        "app/admin/brands/page": "rsc"
+      },
+      "exportedName": "updateBrandAction",
+      "filename": "lib/actions/admin-brands.ts"
+    },
+    "40f931d2867e0f064180e268edc1189963a96db83b": {
+      "workers": {
+        "app/admin/brands/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/brands/page/actions.js { ACTIONS_MODULE0 => \"[project]/lib/actions/admin-brands.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "createBrandAction",
+          "filename": "lib/actions/admin-brands.ts"
+        }
+      },
+      "layer": {
+        "app/admin/brands/page": "rsc"
+      },
+      "exportedName": "createBrandAction",
+      "filename": "lib/actions/admin-brands.ts"
+    }
+  },
+  "edge": {}
+}

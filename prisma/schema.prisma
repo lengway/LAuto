@@ -7,30 +7,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum ImportJobStatus {
-  pending
-  processing
-  completed
-  failed
-}
-
-enum ImportStage {
-  raw
-  parsed
-  normalized
-  validated
-  imported
-  failed
-}
-
 model Brand {
   id        String   @id @default(cuid())
   name      String   @unique
   slug      String   @unique
+  description String?
+  imageUrl   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  cars      Car[]
+  models    Model[]
 }
 
 model Category {
@@ -44,24 +30,26 @@ model Category {
   parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children  Category[] @relation("CategoryHierarchy")
   parts     Part[]
+  partLinks PartCategory[]
 
   @@index([parentId])
   @@index([slug])
 }
 
-model Car {
+model Model {
   id           String              @id @default(cuid())
   brandId      String
   model        String
   slug         String
+  description  String?
+  imageUrl     String?
   generation   String?
   years        String?
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
 
   brand        Brand               @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  compatParts  PartCompatibility[]
-  vinPatterns  VinPattern[]
+  compatParts  PartFitment[]
 
   @@index([brandId])
   @@unique([brandId, slug])
@@ -69,7 +57,6 @@ model Car {
 
 model Part {
   id             String              @id @default(cuid())
-  oemNumber      String?
   slug           String              @unique
   title          String
   categoryId     String
@@ -83,24 +70,37 @@ model Part {
   updatedAt      DateTime            @updatedAt
 
   category       Category            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  compatibilities PartCompatibility[]
+  compatibilities PartFitment[]
+  partCategories PartCategory[]
   images         Image[]
 
   @@index([categoryId])
-  @@index([oemNumber])
   @@index([title])
 }
 
-model PartCompatibility {
-  id        String   @id @default(cuid())
+model PartCategory {
+  id         String   @id @default(cuid())
   partId     String
-  carId      String
+  categoryId String
 
   part       Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
-  car        Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-  @@unique([partId, carId])
-  @@index([carId])
+  @@unique([partId, categoryId])
+  @@index([partId])
+  @@index([categoryId])
+}
+
+model PartFitment {
+  id        String   @id @default(cuid())
+  partId     String
+  modelId    String @map("carId")
+
+  part       Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+  car        Model    @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@unique([partId, modelId])
+  @@index([modelId])
   @@index([partId])
 }
 
@@ -117,57 +117,27 @@ model Image {
   @@index([partId])
 }
 
-model VinPattern {
-  id        String   @id @default(cuid())
-  pattern   String
-  carId     String
+model SiteSettings {
+  id                 String         @id @default(cuid())
+  singletonKey       String         @unique @default("main")
+  orderWhatsAppPhone String
+  mapIframeHtml      String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 
-  car       Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
-
-  @@index([carId])
-  @@index([pattern])
+  contactPhones      ContactPhone[]
 }
 
-model ImportJob {
-  id        String          @id @default(cuid())
-  file      String
-  status    ImportJobStatus @default(pending)
-  summary   Json?
-  rowsTotal Int?
-  rowsSuccess Int?
-  rowsFailed Int?
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+model ContactPhone {
+  id          String       @id @default(cuid())
+  settingsId  String
+  phone       String
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
-  rawRows   RawImportRow[]
-}
+  settings    SiteSettings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
 
-model RawImportRow {
-  id          String      @id @default(cuid())
-  jobId       String
-  line        Int
-  article     String?
-  oem         String?
-  name        String?
-  brand       String?
-  price       String?
-  rawJson     Json?
-  stage       ImportStage @default(raw)
-  createdAt   DateTime    @default(now())
-
-  job         ImportJob   @relation(fields: [jobId], references: [id], onDelete: Cascade)
-
-  @@index([jobId])
-  @@index([jobId, line])
-  @@index([jobId, stage])
-}
-
-model ModelAlias {
-  id        String   @id @default(cuid())
-  alias     String   @unique
-  brand     String
-  model     String
-  createdAt DateTime @default(now())
-
-  @@index([alias])
+  @@index([settingsId])
+  @@index([sortOrder])
 }

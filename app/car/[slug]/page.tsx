@@ -59,7 +59,7 @@ export default async function CarPage({ params }: CarPageProps) {
       </div>
 
       <div className="rounded-xl border border-border/60 bg-card/70 p-4 text-sm text-muted-foreground">
-        VIN-поиск может привести на эту страницу. Если вашей модификации нет в списке, отправьте VIN в WhatsApp.
+        Если вашей модификации нет в списке, отправьте название модели и список нужных деталей в WhatsApp.
         <a href={buildWhatsAppLink(message)} target="_blank" rel="noreferrer" className="ml-1 underline underline-offset-4">
           Написать в WhatsApp
         </a>

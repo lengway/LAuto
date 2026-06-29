@@ -24,7 +24,6 @@ function mergeItem(existing: CartItem, incoming: AddItemInput): CartItem {
     ...existing,
     title: incoming.title,
     slug: incoming.slug,
-    oemNumber: incoming.oemNumber,
     compatibleCars: incoming.compatibleCars,
     image: incoming.image,
     quantity: existing.quantity + (incoming.quantity ?? 1),

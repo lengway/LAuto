@@ -1,0 +1,65 @@
+{
+  "node": {
+    "404271ca5ddfc9029e0dff47b45da2efa274c2ed48": {
+      "workers": {
+        "app/admin/settings/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/settings/page/actions.js { ACTIONS_MODULE0 => \"[project]/lib/actions/admin-site-settings.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "deleteContactPhoneAction",
+          "filename": "lib/actions/admin-site-settings.ts"
+        }
+      },
+      "layer": {
+        "app/admin/settings/page": "rsc"
+      },
+      "exportedName": "deleteContactPhoneAction",
+      "filename": "lib/actions/admin-site-settings.ts"
+    },
+    "4049cd7c5617ef415453cfa5b45429744af1bd9bef": {
+      "workers": {
+        "app/admin/settings/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/settings/page/actions.js { ACTIONS_MODULE0 => \"[project]/lib/actions/admin-site-settings.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "updateSiteSettingsAction",
+          "filename": "lib/actions/admin-site-settings.ts"
+        }
+      },
+      "layer": {
+        "app/admin/settings/page": "rsc"
+      },
+      "exportedName": "updateSiteSettingsAction",
+      "filename": "lib/actions/admin-site-settings.ts"
+    },
+    "406598c0c620c61b3adbc93a0538527e034fa3895d": {
+      "workers": {
+        "app/admin/settings/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/settings/page/actions.js { ACTIONS_MODULE0 => \"[project]/lib/actions/admin-site-settings.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "updateContactPhoneAction",
+          "filename": "lib/actions/admin-site-settings.ts"
+        }
+      },
+      "layer": {
+        "app/admin/settings/page": "rsc"
+      },
+      "exportedName": "updateContactPhoneAction",
+      "filename": "lib/actions/admin-site-settings.ts"
+    },
+    "40772713648ab14c24ec1f1ec4312e28779f716bbf": {
+      "workers": {
+        "app/admin/settings/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/settings/page/actions.js { ACTIONS_MODULE0 => \"[project]/lib/actions/admin-site-settings.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "addContactPhoneAction",
+          "filename": "lib/actions/admin-site-settings.ts"
+        }
+      },
+      "layer": {
+        "app/admin/settings/page": "rsc"
+      },
+      "exportedName": "addContactPhoneAction",
+      "filename": "lib/actions/admin-site-settings.ts"
+    }
+  },
+  "edge": {}
+}

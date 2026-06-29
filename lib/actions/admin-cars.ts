@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -53,7 +53,7 @@ async function resolveBrandIdByName(brandName: string): Promise<string> {
 async function buildUniqueCarSlug(base: string, brandId: string, currentCarId?: string): Promise<string> {
   const normalized = base || `car-${Date.now()}`;
 
-  const existing = await prisma.car.findFirst({
+  const existing = await prisma.model.findFirst({
     where: {
       brandId,
       slug: normalized,
@@ -91,7 +91,7 @@ export async function createCarAction(formData: FormData) {
   const slugBase = toSlug([parsed.model, parsed.generation].filter(Boolean).join(" "));
   const slug = await buildUniqueCarSlug(slugBase, brandId);
 
-  const car = await prisma.car.create({
+  const car = await prisma.model.create({
     data: {
       brandId,
       model: parsed.model,
@@ -114,7 +114,7 @@ export async function updateCarAction(formData: FormData) {
   const parsed = parseCarFormData(formData);
   const brandId = await resolveBrandIdByName(parsed.brandName);
 
-  const existing = await prisma.car.findUnique({
+  const existing = await prisma.model.findUnique({
     where: { id: carId },
     select: { slug: true },
   });
@@ -122,7 +122,7 @@ export async function updateCarAction(formData: FormData) {
   const slugBase = toSlug([parsed.model, parsed.generation].filter(Boolean).join(" "));
   const slug = await buildUniqueCarSlug(slugBase, brandId, carId);
 
-  const car = await prisma.car.update({
+  const car = await prisma.model.update({
     where: { id: carId },
     data: {
       brandId,
@@ -143,14 +143,15 @@ export async function deleteCarAction(formData: FormData) {
     throw new Error("carId is required");
   }
 
-  const existing = await prisma.car.findUnique({
+  const existing = await prisma.model.findUnique({
     where: { id: carId },
     select: { slug: true },
   });
 
-  await prisma.car.delete({
+  await prisma.model.delete({
     where: { id: carId },
   });
 
   revalidateCarPages(undefined, existing?.slug);
 }
+

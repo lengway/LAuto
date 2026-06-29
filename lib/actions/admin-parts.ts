@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -6,12 +6,14 @@ import path from "node:path";
 import { z } from "zod";
 
 import { prisma } from "@/lib/db";
+import { slugifyToLatin } from "@/lib/slug";
 
 const basePartSchema = z.object({
   title: z.string().min(2),
-  oemNumber: z.string().min(2),
-  categoryId: z.string().optional(),
-  newCategoryName: z.string().optional(),
+  description: z.string().optional().transform((value) => value?.trim() || null),
+  categorySelection: z.string().optional(),
+  imageUrl: z.string().optional().transform((value) => value?.trim() || null),
+  imageUrls: z.string().optional().transform((value) => value?.trim() || null),
   priceFrom: z.union([z.string(), z.number()]).optional().transform((value) => {
     if (value === undefined || value === "") {
       return null;
@@ -28,20 +30,13 @@ const basePartSchema = z.object({
   compatibleCarModels: z.string().optional(),
 });
 
-function toSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\p{L}\p{N}]+/gu, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
 function parseCommon(formData: FormData) {
   const raw = {
     title: String(formData.get("title") ?? ""),
-    oemNumber: String(formData.get("oemNumber") ?? ""),
-    categoryId: String(formData.get("categoryId") ?? ""),
-    newCategoryName: String(formData.get("newCategoryName") ?? ""),
+    description: String(formData.get("description") ?? ""),
+    categorySelection: String(formData.get("categorySelection") ?? ""),
+    imageUrl: String(formData.get("imageUrl") ?? ""),
+    imageUrls: String(formData.get("imageUrls") ?? ""),
     priceFrom: String(formData.get("priceFrom") ?? ""),
     inStock:
       formData.get("inStock") === "true" ||
@@ -51,38 +46,125 @@ function parseCommon(formData: FormData) {
   };
 
   const parsed = basePartSchema.parse(raw);
-  const categoryId = parsed.categoryId?.trim() ?? "";
-  const newCategoryName = parsed.newCategoryName?.trim() ?? "";
 
-  if (!categoryId && !newCategoryName) {
-    throw new Error("Выберите категорию или введите новую");
+  if (!parsed.categorySelection?.trim()) {
+    throw new Error("Выберите хотя бы одну категорию");
   }
 
   return {
     ...parsed,
-    categoryId,
-    newCategoryName,
+    categorySelection: parsed.categorySelection,
   };
 }
 
-async function resolveCategoryId(categoryId: string, newCategoryName: string): Promise<string> {
-  if (newCategoryName) {
-    const slug = toSlug(newCategoryName);
+type CategorySelectionItem = {
+  id: string;
+  name: string;
+  isNew: boolean;
+};
 
+function parseCategorySelection(selection: string | undefined): CategorySelectionItem[] {
+  if (!selection?.trim()) {
+    return [];
+  }
+
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(selection);
+  } catch {
+    throw new Error("Некорректный формат категорий");
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error("Некорректный формат категорий");
+  }
+
+  const normalized: CategorySelectionItem[] = [];
+
+  for (const item of parsed) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
+
+    const maybe = item as Partial<CategorySelectionItem>;
+    const name = String(maybe.name ?? "").trim();
+    const id = String(maybe.id ?? "").trim();
+    const isNew = Boolean(maybe.isNew);
+
+    if (!name) {
+      continue;
+    }
+
+    if (!isNew && !id) {
+      continue;
+    }
+
+    normalized.push({ id, name, isNew });
+  }
+
+  return normalized;
+}
+
+async function resolveCategoryIds(selection: string | undefined): Promise<string[]> {
+  const items = parseCategorySelection(selection);
+  if (!items.length) {
+    throw new Error("Выберите хотя бы одну категорию");
+  }
+
+  const categoryIds: string[] = [];
+
+  for (const item of items) {
+    if (!item.isNew) {
+      categoryIds.push(item.id);
+      continue;
+    }
+
+    const slug = slugifyToLatin(item.name);
     if (!slug) {
-      throw new Error("Некорректное название категории");
+      continue;
     }
 
     const category = await prisma.category.upsert({
       where: { slug },
-      update: { name: newCategoryName },
-      create: { name: newCategoryName, slug },
+      update: { name: item.name },
+      create: { name: item.name, slug },
+      select: { id: true },
     });
 
-    return category.id;
+    categoryIds.push(category.id);
   }
 
-  return categoryId;
+  const uniqueIds = Array.from(new Set(categoryIds.filter(Boolean)));
+  if (!uniqueIds.length) {
+    throw new Error("Выберите хотя бы одну категорию");
+  }
+
+  return uniqueIds;
+}
+
+async function buildUniquePartSlug(title: string, currentPartId?: string): Promise<string> {
+  const baseSlug = slugifyToLatin(title) || `part-${Date.now()}`;
+  let candidate = baseSlug;
+
+  for (let index = 0; index < 100; index += 1) {
+    const existing = await prisma.part.findUnique({
+      where: {
+        slug: candidate,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!existing || existing.id === currentPartId) {
+      return candidate;
+    }
+
+    candidate = `${baseSlug}-${index + 2}`;
+  }
+
+  return `${baseSlug}-${Date.now()}`;
 }
 
 type DbCarLookup = {
@@ -107,7 +189,7 @@ async function resolveCarIds(input: string | undefined): Promise<string[]> {
     return [];
   }
 
-  const cars = (await prisma.car.findMany({
+  const cars = (await prisma.model.findMany({
     include: {
       brand: true,
     },
@@ -122,7 +204,7 @@ async function resolveCarIds(input: string | undefined): Promise<string[]> {
 }
 
 async function replaceCompatibilities(partId: string, carIds: string[]) {
-  await prisma.partCompatibility.deleteMany({
+  await prisma.partFitment.deleteMany({
     where: {
       partId,
     },
@@ -132,10 +214,42 @@ async function replaceCompatibilities(partId: string, carIds: string[]) {
     return;
   }
 
-  await prisma.partCompatibility.createMany({
-    data: carIds.map((carId) => ({ partId, carId })),
+  await prisma.partFitment.createMany({
+    data: carIds.map((carId) => ({ partId, modelId: carId })),
     skipDuplicates: true,
   });
+}
+
+async function replacePartCategories(partId: string, categoryIds: string[]) {
+  await prisma.partCategory.deleteMany({
+    where: {
+      partId,
+    },
+  });
+
+  if (!categoryIds.length) {
+    return;
+  }
+
+  await prisma.partCategory.createMany({
+    data: categoryIds.map((categoryId) => ({ partId, categoryId })),
+    skipDuplicates: true,
+  });
+}
+
+function parseImageUrlsInput(input?: string | null): string[] {
+  if (!input?.trim()) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      input
+        .split(/[\n,;]+/)
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+    )
+  );
 }
 
 function getSafeFileExtension(fileName: string): string {
@@ -148,58 +262,81 @@ function getSafeFileExtension(fileName: string): string {
   return "jpg";
 }
 
-async function savePartImage(formData: FormData, partId: string, title: string) {
-  const candidate = formData.get("image");
+async function replacePartImages(
+  formData: FormData,
+  partId: string,
+  title: string,
+  imageUrlFromInput?: string | null,
+  imageUrlsInput?: string | null
+) {
+  const uploadCandidates = [formData.get("image"), ...formData.getAll("images")]
+    .filter((entry): entry is File => entry instanceof File && entry.size > 0);
 
-  if (!(candidate instanceof File) || candidate.size === 0) {
+  const normalizedUrls = Array.from(
+    new Set([
+      ...(imageUrlFromInput?.trim() ? [imageUrlFromInput.trim()] : []),
+      ...parseImageUrlsInput(imageUrlsInput),
+    ])
+  );
+
+  const uploadDir = path.join(process.cwd(), "public", "uploads", "parts");
+  const uploadedUrls: string[] = [];
+
+  if (uploadCandidates.length) {
+    await mkdir(uploadDir, { recursive: true });
+  }
+
+  for (let index = 0; index < uploadCandidates.length; index += 1) {
+    const candidate = uploadCandidates[index]!;
+
+    if (!candidate.type.startsWith("image/")) {
+      throw new Error("Нужно загрузить файл изображения");
+    }
+
+    const extension = getSafeFileExtension(candidate.name);
+    const fileName = `${partId}-${Date.now()}-${index}.${extension}`;
+    const absolutePath = path.join(uploadDir, fileName);
+    const publicUrl = `/uploads/parts/${fileName}`;
+
+    const bytes = await candidate.arrayBuffer();
+    await writeFile(absolutePath, Buffer.from(bytes));
+    uploadedUrls.push(publicUrl);
+  }
+
+  const finalUrls = [...normalizedUrls, ...uploadedUrls];
+
+  await prisma.image.deleteMany({
+    where: {
+      partId,
+    },
+  });
+
+  if (!finalUrls.length) {
     return;
   }
 
-  if (!candidate.type.startsWith("image/")) {
-    throw new Error("Нужно загрузить файл изображения");
-  }
-
-  const extension = getSafeFileExtension(candidate.name);
-  const fileName = `${partId}-${Date.now()}.${extension}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "parts");
-  const absolutePath = path.join(uploadDir, fileName);
-  const publicUrl = `/uploads/parts/${fileName}`;
-
-  await mkdir(uploadDir, { recursive: true });
-  const bytes = await candidate.arrayBuffer();
-  await writeFile(absolutePath, Buffer.from(bytes));
-
-  await prisma.image.upsert({
-    where: {
-      partId_sortOrder: {
-        partId,
-        sortOrder: 0,
-      },
-    },
-    update: {
-      url: publicUrl,
-      alt: title,
-    },
-    create: {
+  await prisma.image.createMany({
+    data: finalUrls.map((url, sortOrder) => ({
       partId,
-      url: publicUrl,
+      url,
       alt: title,
-      sortOrder: 0,
-    },
+      sortOrder,
+    })),
   });
 }
 
 export async function createPartAction(formData: FormData) {
   const parsed = parseCommon(formData);
-  const slugBase = toSlug(`${parsed.title} ${parsed.oemNumber}`);
+  const slug = await buildUniquePartSlug(parsed.title);
   const carIds = await resolveCarIds(parsed.compatibleCarModels);
-  const categoryId = await resolveCategoryId(parsed.categoryId, parsed.newCategoryName);
+  const categoryIds = await resolveCategoryIds(parsed.categorySelection);
+  const categoryId = categoryIds[0]!;
 
   const part = await prisma.part.create({
     data: {
       title: parsed.title,
-      oemNumber: parsed.oemNumber,
-      slug: slugBase || `part-${Date.now()}`,
+      description: parsed.description,
+      slug,
       categoryId,
       priceFrom: parsed.priceFrom,
       inStock: parsed.inStock,
@@ -207,7 +344,8 @@ export async function createPartAction(formData: FormData) {
   });
 
   await replaceCompatibilities(part.id, carIds);
-  await savePartImage(formData, part.id, parsed.title);
+  await replacePartCategories(part.id, categoryIds);
+  await replacePartImages(formData, part.id, parsed.title, parsed.imageUrl, parsed.imageUrls);
 
   revalidatePath("/admin");
   revalidatePath("/admin/parts");
@@ -222,9 +360,10 @@ export async function updatePartAction(formData: FormData) {
   }
 
   const parsed = parseCommon(formData);
-  const slugBase = toSlug(`${parsed.title} ${parsed.oemNumber}`);
+  const slug = await buildUniquePartSlug(parsed.title, partId);
   const carIds = await resolveCarIds(parsed.compatibleCarModels);
-  const categoryId = await resolveCategoryId(parsed.categoryId, parsed.newCategoryName);
+  const categoryIds = await resolveCategoryIds(parsed.categorySelection);
+  const categoryId = categoryIds[0]!;
 
   const part = await prisma.part.update({
     where: {
@@ -232,8 +371,8 @@ export async function updatePartAction(formData: FormData) {
     },
     data: {
       title: parsed.title,
-      oemNumber: parsed.oemNumber,
-      slug: slugBase || `part-${Date.now()}`,
+      description: parsed.description,
+      slug,
       categoryId,
       priceFrom: parsed.priceFrom,
       inStock: parsed.inStock,
@@ -241,7 +380,8 @@ export async function updatePartAction(formData: FormData) {
   });
 
   await replaceCompatibilities(part.id, carIds);
-  await savePartImage(formData, part.id, parsed.title);
+  await replacePartCategories(part.id, categoryIds);
+  await replacePartImages(formData, part.id, parsed.title, parsed.imageUrl, parsed.imageUrls);
 
   revalidatePath("/admin");
   revalidatePath("/admin/parts");
@@ -279,3 +419,4 @@ export async function deletePartAction(formData: FormData) {
     revalidatePath(`/part/${existing.slug}`);
   }
 }
+

@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { CartFab } from "@/components/cart/cart-fab";
 import { CartProvider } from "@/components/cart/cart-provider";
 import { SiteHeader } from "@/components/layout/site-header";
+import { getPublicSiteSettings } from "@/lib/services/site-settings";
 import { AuroraBackground } from "@/components/ui/shadcn-io/aurora-background";
 
 import "./globals.css";
@@ -24,11 +25,13 @@ export const metadata: Metadata = {
     "Каталог китайских автозапчастей с VIN-поиском и оформлением заказа через WhatsApp по Казахстану.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const settings = await getPublicSiteSettings();
+
   return (
     <html lang="ru">
       <body
@@ -36,9 +39,9 @@ export default function RootLayout({
       >
         <AuroraBackground contentClassName="min-h-screen">
           <CartProvider>
-            <SiteHeader />
+            <SiteHeader orderWhatsAppPhone={settings.orderWhatsAppPhone} />
             <main className="flex-1">{children}</main>
-            <CartFab />
+            <CartFab orderWhatsAppPhone={settings.orderWhatsAppPhone} />
           </CartProvider>
         </AuroraBackground>
       </body>

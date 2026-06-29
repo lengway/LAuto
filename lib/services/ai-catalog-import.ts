@@ -4,12 +4,13 @@ type AiImportIssue = {
   message: string;
 };
 
-type AiImportRow = {
+export type AiImportRow = {
   line: number;
   title: string;
   oem?: string;
   brand: string;
   model: string;
+  models: string[];
   category: string;
   price?: string | number;
   image?: string;
@@ -23,7 +24,13 @@ export type AiCatalogImportResult = {
 };
 
 type AiCatalogParseContext = {
+  knownBrands?: string[];
   knownModels?: string[];
+  knownBrandModels?: Array<{
+    brand: string;
+    model: string;
+  }>;
+  signal?: AbortSignal;
 };
 
 type OpenAiJson = {
@@ -32,6 +39,51 @@ type OpenAiJson = {
   errors?: unknown;
   notes?: unknown;
 };
+
+function logAiImport(message: string, meta?: Record<string, unknown>) {
+  const prefix = `[ai-import][${new Date().toISOString()}] ${message}`;
+
+  if (meta) {
+    console.info(prefix, meta);
+    return;
+  }
+
+  console.info(prefix);
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function parseFetchError(error: unknown): {
+  message: string;
+  isAbort: boolean;
+  causeMessage?: string;
+  causeCode?: string;
+  errorName?: string;
+} {
+  const message = error instanceof Error ? error.message : "Неизвестная ошибка fetch";
+  const isAbort = error instanceof Error && error.name === "AbortError";
+
+  let causeMessage: string | undefined;
+  let causeCode: string | undefined;
+  if (error instanceof Error && "cause" in error) {
+    const cause = (error as Error & { cause?: unknown }).cause;
+    if (cause && typeof cause === "object") {
+      const value = cause as Record<string, unknown>;
+      causeMessage = typeof value.message === "string" ? value.message : undefined;
+      causeCode = typeof value.code === "string" ? value.code : undefined;
+    }
+  }
+
+  return {
+    message,
+    isAbort,
+    causeMessage,
+    causeCode,
+    errorName: error instanceof Error ? error.name : undefined,
+  };
+}
 
 function isPlaceholderValue(input: unknown): boolean {
   const normalized = String(input ?? "")
@@ -74,11 +126,20 @@ function normalizeRow(input: unknown): AiImportRow | null {
     return null;
   }
 
+  const modelFromString = String(value.model ?? "").trim();
+  const modelListFromArray = Array.isArray(value.models)
+    ? value.models
+        .map((entry) => String(entry ?? "").trim())
+        .filter(Boolean)
+    : [];
+  const normalizedModels = Array.from(new Set(modelListFromArray.length ? modelListFromArray : [modelFromString].filter(Boolean)));
+
   const row: AiImportRow = {
     line,
     title: String(value.title ?? "").trim(),
     brand: String(value.brand ?? "").trim(),
-    model: String(value.model ?? "").trim(),
+    model: modelFromString || normalizedModels[0] || "",
+    models: normalizedModels,
     category: String(value.category ?? "").trim(),
   };
 
@@ -114,17 +175,39 @@ export async function parseCatalogTextWithAi(
   rawInput: string,
   context?: AiCatalogParseContext
 ): Promise<AiCatalogImportResult> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  logAiImport("Запуск AI-парсинга", {
+    inputLength: rawInput.length,
+  });
 
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) {
     throw new Error("OPENAI_API_KEY не задан в окружении");
   }
 
   const model = process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini";
+  logAiImport("Подготовлен контекст для AI", {
+    model,
+    knownBrands: context?.knownBrands?.length ?? 0,
+    knownModels: context?.knownModels?.length ?? 0,
+    knownBrandModels: context?.knownBrandModels?.length ?? 0,
+  });
+
+  const knownBrands = (context?.knownBrands ?? []).filter(Boolean).slice(0, 300);
   const knownModels = (context?.knownModels ?? []).filter(Boolean).slice(0, 400);
+  const knownBrandModels = (context?.knownBrandModels ?? [])
+    .filter((entry) => entry.brand?.trim() && entry.model?.trim())
+    .slice(0, 700);
+  const knownBrandsBlock = knownBrands.length
+    ? `\nСправочник существующих марок из БД:\n${knownBrands.map((entry) => `- ${entry}`).join("\n")}\n`
+    : "";
   const knownModelsBlock = knownModels.length
     ? `\nСправочник существующих моделей из БД (используй как контекст для поля model):\n${knownModels
         .map((entry) => `- ${entry}`)
+        .join("\n")}\n`
+    : "";
+  const knownBrandModelsBlock = knownBrandModels.length
+    ? `\nСправочник пар бренд→модель из БД:\n${knownBrandModels
+        .map((entry) => `- ${entry.brand} -> ${entry.model}`)
         .join("\n")}\n`
     : "";
 
@@ -180,6 +263,7 @@ Each row must contain:
 "title": string,
 "brand": string,
 "model": string,
+"models": string[],
 "category": string,
 "oem": string|null,
 "price": number|null
@@ -192,6 +276,7 @@ Rules:
 * category must never be "-"
 * brand must be normalized
 * model must not be "-"
+* models must contain at least one model name
 
 ---
 
@@ -316,42 +401,100 @@ Never output brand = "Китай".
 
 Never output category = "-".
 
+Use provided DB context (brands/models) as primary reference for normalization.
+
+If a part fits multiple models, return all of them in "models" array.
+
+If model is unknown in DB but clearly present in input, keep it as a new model candidate.
+
 ---
 
 # FINAL STEP
 
 Return clean rows ready for database import.
-${knownModelsBlock ? `
+${knownBrandsBlock || knownModelsBlock || knownBrandModelsBlock ? `
 
-Known models from database (use as optional disambiguation context):
-${knownModelsBlock}` : ""}
+Known entities from database (use as optional disambiguation context):
+${knownBrandsBlock}${knownModelsBlock}${knownBrandModelsBlock}` : ""}
 `;
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content: prompt,
+  let response: Response | null = null;
+  const maxAttempts = Number(process.env.OPENAI_FETCH_RETRIES ?? 1);
+  const retryDelayMs = Number(process.env.OPENAI_FETCH_RETRY_DELAY_MS ?? 2000);
+  let lastFetchError: ReturnType<typeof parseFetchError> | null = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      logAiImport("Отправка запроса в OpenAI API", {
+        hasExternalAbortSignal: Boolean(context?.signal),
+        attempt,
+        maxAttempts,
+      });
+
+      response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
         },
-        {
-          role: "user",
-          content: rawInput,
-        },
-      ],
-    }),
+        body: JSON.stringify({
+          model,
+          temperature: 0,
+          response_format: { type: "json_object" },
+          messages: [
+            {
+              role: "system",
+              content: prompt,
+            },
+            {
+              role: "user",
+              content: rawInput,
+            },
+          ],
+        }),
+        signal: context?.signal,
+      });
+
+      break;
+    } catch (error) {
+      const parsedError = parseFetchError(error);
+      lastFetchError = parsedError;
+
+      logAiImport("Ошибка вызова OpenAI API", {
+        ...parsedError,
+        attempt,
+        maxAttempts,
+      });
+
+      if (parsedError.isAbort) {
+        throw new Error("Импорт остановлен пользователем");
+      }
+
+      if (attempt < maxAttempts) {
+        await wait(retryDelayMs * attempt);
+        continue;
+      }
+
+      throw new Error(`Ошибка AI API (fetch failed): ${parsedError.message}`);
+    }
+  }
+
+  if (!response) {
+    const fallbackMessage = lastFetchError?.message ?? "Не удалось получить ответ от AI API";
+    throw new Error(`Ошибка AI API (fetch failed): ${fallbackMessage}`);
+  }
+
+  logAiImport("Получен ответ AI API", {
+    status: response.status,
+    ok: response.ok,
   });
 
   if (!response.ok) {
     const text = await response.text();
+    logAiImport("AI API вернул ошибку", {
+      status: response.status,
+      bodyPreview: text.slice(0, 2000),
+    });
     throw new Error(`Ошибка AI API: ${response.status} ${text}`);
   }
 
@@ -365,6 +508,9 @@ ${knownModelsBlock}` : ""}
 
   const content = payload.choices?.[0]?.message?.content;
   if (!content) {
+    logAiImport("Пустой content от OpenAI", {
+      hasChoices: Boolean(payload.choices?.length),
+    });
     throw new Error("AI не вернул содержимое ответа");
   }
 
@@ -414,6 +560,13 @@ ${knownModelsBlock}` : ""}
 
   const hasRows = rows.length > 0;
   const status = errors.length === 0 && hasRows ? "ok" : "needs_clarification";
+
+  logAiImport("AI-парсинг завершен", {
+    status,
+    rows: rows.length,
+    errors: errors.length,
+    notes: notes.length,
+  });
 
   return {
     status,

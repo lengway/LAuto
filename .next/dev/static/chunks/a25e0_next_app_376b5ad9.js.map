@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 3, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/lengway/Desktop/Projects/lauto/node_modules/.pnpm/next%4016.0.5_%40babel%2Bcore%407.2_ace9e6b1fee9bd89d608f1baf139bac6/node_modules/next/app.js"],"sourcesContent":["module.exports = require('./dist/pages/_app')\n"],"names":[],"mappings":"AAAA,OAAO,OAAO","ignoreList":[0]}}]
+}

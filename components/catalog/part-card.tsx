@@ -37,8 +37,6 @@ export function PartCard({ part }: PartCardProps) {
         </div>
 
         <CardTitle className="line-clamp-2 text-base">{part.title}</CardTitle>
-
-        <p className="text-xs text-muted-foreground">OEM: {part.oemNumber}</p>
       </CardHeader>
 
       <CardContent className="space-y-2 text-xs text-muted-foreground">
@@ -61,7 +59,6 @@ export function PartCard({ part }: PartCardProps) {
             partId: part.id,
             title: part.title,
             slug: part.slug,
-            oemNumber: part.oemNumber,
             compatibleCars: part.compatibleCars.map((car) => car.fullName),
             image: part.imageUrl,
           }}

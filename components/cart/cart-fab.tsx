@@ -17,11 +17,11 @@ import {
 import { createWhatsAppOrderMessage } from "@/lib/cart";
 import { buildWhatsAppLink } from "@/lib/config";
 
-export function CartFab() {
+export function CartFab({ orderWhatsAppPhone }: { orderWhatsAppPhone: string }) {
   const { items, totalItems, removeItem, setQuantity, clearCart } = useCart();
 
   const message = createWhatsAppOrderMessage(items);
-  const whatsappHref = buildWhatsAppLink(message);
+  const whatsappHref = buildWhatsAppLink(message, orderWhatsAppPhone);
 
   return (
     <Sheet>
@@ -50,7 +50,6 @@ export function CartFab() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">OEM: {item.oemNumber}</p>
                     {item.compatibleCars.length ? (
                       <p className="text-xs text-muted-foreground">{item.compatibleCars.join(", ")}</p>
                     ) : null}

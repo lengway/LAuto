@@ -1,9 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
-
-import { prisma } from "@/lib/db";
 
 const vinPatternSchema = z.object({
   pattern: z
@@ -21,23 +18,9 @@ function parseVinPatternFormData(formData: FormData) {
   });
 }
 
-function revalidateVinAdminPages() {
-  revalidatePath("/admin");
-  revalidatePath("/admin/vin");
-  revalidatePath("/vin-search");
-}
-
 export async function createVinPatternAction(formData: FormData) {
-  const parsed = parseVinPatternFormData(formData);
-
-  await prisma.vinPattern.create({
-    data: {
-      pattern: parsed.pattern,
-      carId: parsed.carId,
-    },
-  });
-
-  revalidateVinAdminPages();
+  parseVinPatternFormData(formData);
+  throw new Error("VIN-паттерны отключены в упрощенной версии каталога.");
 }
 
 export async function updateVinPatternAction(formData: FormData) {
@@ -47,17 +30,8 @@ export async function updateVinPatternAction(formData: FormData) {
     throw new Error("id is required");
   }
 
-  const parsed = parseVinPatternFormData(formData);
-
-  await prisma.vinPattern.update({
-    where: { id },
-    data: {
-      pattern: parsed.pattern,
-      carId: parsed.carId,
-    },
-  });
-
-  revalidateVinAdminPages();
+  parseVinPatternFormData(formData);
+  throw new Error("VIN-паттерны отключены в упрощенной версии каталога.");
 }
 
 export async function deleteVinPatternAction(formData: FormData) {
@@ -67,9 +41,5 @@ export async function deleteVinPatternAction(formData: FormData) {
     throw new Error("id is required");
   }
 
-  await prisma.vinPattern.delete({
-    where: { id },
-  });
-
-  revalidateVinAdminPages();
+  throw new Error("VIN-паттерны отключены в упрощенной версии каталога.");
 }
